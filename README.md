@@ -1,5 +1,7 @@
 #SWCollectionViewStaggeredGridLayout
 
+![](https://raw.githubusercontent.com/spilliams/SWCollectionViewStaggeredGridLayout/master/screenshot.png)
+
 A collection view layout for [JNWCollectionView](https://github.com/jwilling/JNWCollectionView) that mimics a Pinterest-style staggered grid. Note: **this is for Mac applications, not iOS**.
 
 ##Usage
