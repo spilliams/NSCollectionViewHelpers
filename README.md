@@ -12,6 +12,7 @@ MyViewController.h:
     #import "SWCollectionViewStaggeredGridLayout.h"
     
     @interface MyViewController : NSViewController <[protocols here. more on this below]>
+    @property (nonatomic, weak) IBOutlet UCTouchScrollCollectionView *collectionView
     ...
 
 MyViewController.m:
@@ -35,7 +36,7 @@ Unlike `JNWCollectionViewGridLayout` (which this class inherits from), the stagg
 
 ###Working with `SWCollectionViewStaggeredGridLayoutDelegate`
 
-Set your view controller to be the layout's delegate and you can respond to messages `-numberOfColumnsInCollectionView:section:` and `-collectionView:heightForCellWidth:atIndexPath:`. These two methods help the layout in determining item size.
+Set your view controller to be the layout's `staggeredDelegate` and you can respond to messages `-numberOfColumnsInCollectionView:section:` and `-collectionView:heightForCellWidth:atIndexPath:`. These two methods help the layout in determining item size.
 
 You'll note that one of the parameters to the number of columns method is `section`. This allows you to have different numbers of columns for different sections of your collection view.
 
