@@ -12,7 +12,7 @@ MyViewController.h:
     #import "SWCollectionViewStaggeredGridLayout.h"
     
     @interface MyViewController : NSViewController <[protocols here. more on this below]>
-    @property (nonatomic, weak) IBOutlet UCTouchScrollCollectionView *collectionView
+    @property (nonatomic, weak) IBOutlet JNWCollectionView *collectionView
     ...
 
 MyViewController.m:
