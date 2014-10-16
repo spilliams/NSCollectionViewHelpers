@@ -11,7 +11,7 @@ MyViewController.h:
     ...
     #import "SWCollectionViewStaggeredGridLayout.h"
     
-    @interface MyViewController : NSViewController <[protocols here. more on this below]>
+    @interface MyViewController : NSViewController <JNWCollectionViewDataSource, JNWCollectionViewDelegate, JNWCollectionViewGridLayoutDelegate, SWCollectionViewStaggeredGridLayoutDelegate>
     @property (nonatomic, weak) IBOutlet JNWCollectionView *collectionView
     ...
 
