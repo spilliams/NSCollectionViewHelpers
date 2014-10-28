@@ -1,6 +1,6 @@
 #SWCollectionViewStaggeredGridLayout
 
-![](https://raw.githubusercontent.com/spilliams/SWCollectionViewStaggeredGridLayout/master/screenshot.png)
+![](https://raw.githubusercontent.com/spilliams/NSCollectionViewHelpers/master/SWCollectionViewStaggeredGridLayout/screenshot.png)
 
 A collection view layout for [JNWCollectionView](https://github.com/jwilling/JNWCollectionView) that mimics a Pinterest-style staggered grid.
 
