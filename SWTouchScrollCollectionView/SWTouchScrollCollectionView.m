@@ -36,7 +36,7 @@
 
 + (instancetype)pointSmootherWithSmoothLength:(NSInteger)smoothLength
 {
-    UCPointSmoother *p = [UCPointSmoother new];
+    SWPointSmoother *p = [SWPointSmoother new];
     [p setSmoothLength:smoothLength];
     return p;
 }
