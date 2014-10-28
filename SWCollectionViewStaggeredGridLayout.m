@@ -20,6 +20,11 @@ typedef struct {
     CGSize size;
 } JNWCollectionViewGridLayoutItemInfo;
 
+typedef NS_ENUM(NSInteger, SWColumnEdge) {
+    SWColumnEdgeTop,
+    SWColumnEdgeBottom
+};
+
 @interface SWCollectionViewStaggeredGridLayoutColumnItemInfo : NSObject
     @property (nonatomic, assign) NSIndexPath *indexPath;
     @property (nonatomic, assign) CGPoint origin;
@@ -33,9 +38,13 @@ typedef struct {
 // `columns` property contains column data ("which index paths are in each column")
 @interface JNWCollectionViewGridLayoutSection : NSObject
 - (instancetype)initWithNumberOfItems:(NSInteger)numberOfItems;
+/// The y offset of the section
 @property (nonatomic, assign) CGFloat offset;
+/// The height of the section's content--including edge insets
 @property (nonatomic, assign) CGFloat height;
+/// The height of the section's header
 @property (nonatomic, assign) CGFloat headerHeight;
+/// THe height of the section's footer
 @property (nonatomic, assign) CGFloat footerHeight;
 @property (nonatomic, assign) NSInteger index;
 @property (nonatomic, assign) NSInteger numberOfItems;
@@ -215,67 +224,69 @@ typedef struct {
     if (LOG) NSLog(@"done preparing layout for %i sections", (int)self.sections.count);
 }
 
-- (JNWCollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
+- (JNWCollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
+{
     JNWCollectionViewGridLayoutSection *section = self.sections[indexPath.jnw_section];
     JNWCollectionViewGridLayoutItemInfo itemInfo = section.itemInfo[indexPath.jnw_item];
     CGFloat offset = section.offset;
     
     JNWCollectionViewLayoutAttributes *attributes = [[JNWCollectionViewLayoutAttributes alloc] init];
-    attributes.frame = CGRectMake(itemInfo.origin.x, itemInfo.origin.y + offset, itemInfo.size.width, itemInfo.size.height);
+    attributes.frame = CGRectMake(itemInfo.origin.x,
+                                  itemInfo.origin.y + offset,
+                                  itemInfo.size.width,
+                                  itemInfo.size.height);
     attributes.alpha = 1.f;
     return attributes;
 }
 
 - (NSArray *)indexPathsForItemsInRect:(CGRect)rect
 {
-    if (LOG_IN_RECT) NSLog(@"[layout] indexPathsForItemsInRect: {%f, %f, %f, %f}", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+    // I assume rect is defined in the coordinate space of the entire collection view
+    
+    if (LOG_IN_RECT) NSLog(@"[layout] indexPathsForItemsInRect: {%f, %f, %f, %f}",
+                           rect.origin.x,
+                           rect.origin.y,
+                           rect.size.width,
+                           rect.size.height);
     NSMutableArray *indexPaths = [NSMutableArray array];
     
-    for (NSUInteger section = 0; section < self.sections.count; section++) {
+    for (NSUInteger sectionIndex = 0; sectionIndex < self.sections.count; sectionIndex++) {
         
         // first check if section is in rect
-        if (!CGRectIntersectsRect([self rectForSectionAtIndex:section], rect)) continue;
-        if (LOG_IN_RECT) NSLog(@"  section %i is in rect", (int)section);
-        JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:section];
+        if (!CGRectIntersectsRect([self rectForSectionAtIndex:sectionIndex], rect)) continue;
+        if (LOG_IN_RECT) NSLog(@"  section %i is in rect", (int)sectionIndex);
+        JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
         
-        
-        // then determine which columns are in the rect
-        NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView section:section];
-        CGFloat columnWidth = self.collectionView.visibleSize.width / numberOfColumns;
-        NSRange columnsInRect = NSMakeRange(0, 0);
-        CGPoint testPoint = CGPointMake(0, CGRectGetMinY(rect));
-        for (NSInteger column = 0; column < numberOfColumns; column++) {
-            if (CGRectContainsPoint(rect, testPoint)) {
-                if (columnsInRect.length == 0) {
-                    columnsInRect = NSMakeRange(column, 1);
-                } else {
-                    columnsInRect.length++;
-                }
-            }
-            
-            testPoint.x += columnWidth;
-        }
-        
-        // finally get which items
-        for (NSUInteger columnIndex = columnsInRect.location; columnIndex < columnsInRect.length; columnIndex++) {
+        NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView
+                                                                                    section:sectionIndex];
+        for (NSUInteger columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
             NSArray *column = [sectionInfo.columns objectAtIndex:columnIndex];
             
-            for (NSUInteger item = 0; item < column.count; item++) {
-                SWCollectionViewStaggeredGridLayoutColumnItemInfo *itemInfo = [column objectAtIndex:item];
-                
-                // FIXME: play with various edge insets, header and footer heights.
-                // I'm not sure this algebra holds up.
-                // item origin already includes edge insets, but I'm not sure we need
-                // to add collection view frame origin?
-                CGRect itemRect = CGRectMake(itemInfo.origin.x + self.collectionView.frame.origin.x,
-                                             itemInfo.origin.y + sectionInfo.offset + self.collectionView.frame.origin.y,
-                                             itemInfo.size.width,
-                                             itemInfo.size.height);
-                if (CGRectIntersectsRect(itemRect, rect)) {
-                    if (LOG_IN_RECT) NSLog(@"    item %i is in rect", (int)itemInfo.indexPath.jnw_item);
-                    [indexPaths addObject:itemInfo.indexPath];
-                }
-            } // item loop
+            if (!column.count) continue;
+            
+            NSInteger topItem = [self nearestIntersectingItemInColumn:column inRect:rect edge:SWColumnEdgeTop];
+            NSInteger bottomItem = [self nearestIntersectingItemInColumn:column inRect:rect edge:SWColumnEdgeBottom];
+            
+            for (NSInteger item = topItem; item <= bottomItem; item++) {
+                [indexPaths addObject:[(SWCollectionViewStaggeredGridLayoutColumnItemInfo *)[column objectAtIndex:item] indexPath]];
+            }
+            
+//            for (NSUInteger item = 0; item < column.count; item++) {
+//                SWCollectionViewStaggeredGridLayoutColumnItemInfo *itemInfo = [column objectAtIndex:item];
+//                
+//                // FIXME: play with various edge insets, header and footer heights.
+//                // I'm not sure this algebra holds up.
+//                // item origin already includes edge insets, but I'm not sure we need
+//                // to add collection view frame origin?
+//                CGRect itemRect = CGRectMake(itemInfo.origin.x + self.collectionView.frame.origin.x,
+//                                             itemInfo.origin.y + sectionInfo.offset + self.collectionView.frame.origin.y,
+//                                             itemInfo.size.width,
+//                                             itemInfo.size.height);
+//                if (CGRectIntersectsRect(itemRect, rect)) {
+//                    if (LOG_IN_RECT) NSLog(@"    item %i is in rect", (int)itemInfo.indexPath.jnw_item);
+//                    [indexPaths addObject:itemInfo.indexPath];
+//                }
+//            } // item loop
         } // column loop
     } // section loop
     return indexPaths;
@@ -355,6 +366,47 @@ typedef struct {
 }
 
 #pragma mark - Helper Methods
+
+- (NSInteger)nearestIntersectingItemInColumn:(NSArray *)column inRect:(CGRect)containingRect edge:(SWColumnEdge)columnEdge
+{
+    NSInteger low = 0;
+    NSInteger high = column.count;
+    NSInteger mid = 0;
+    
+    CGFloat edgeLocation = (columnEdge == SWColumnEdgeTop ? containingRect.origin.y : containingRect.origin.y + containingRect.size.height);
+    
+    while (low <= high) {
+        mid = (low + high) / 2;
+        
+        if (mid >= column.count) return column.count-1;
+        
+        SWCollectionViewStaggeredGridLayoutColumnItemInfo *midInfo = [column objectAtIndex:mid];
+        
+        if (columnEdge == SWColumnEdgeTop) {
+            
+            if (midInfo.origin.y > edgeLocation) {
+                high = mid-1;
+            } else if (midInfo.origin.y + midInfo.size.height < edgeLocation) {
+                low = mid+1;
+            } else {
+                return mid;
+            }
+            
+        } else { // SWColumnEdgeBottom
+            
+            if (midInfo.origin.y > edgeLocation) {
+                high = mid-1;
+            } else if (midInfo.origin.y + midInfo.size.height < edgeLocation) {
+                low = mid+1;
+            } else {
+                return mid;
+            }
+            
+        }
+    }
+    
+    return mid;
+}
 
 // returns a number representing the length of the shared distance of two rectangles' edges
 // only considers y, so the rects could be miles apart on the x axis, or even overlapping.
