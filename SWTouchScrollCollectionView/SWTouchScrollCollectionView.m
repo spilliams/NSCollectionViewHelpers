@@ -11,14 +11,92 @@
 
 #define LOG YES
 
-@interface SWPointSmoother : NSObject
+@interface SWPointSmoother : NSObject {
+    BOOL needsCalc;
+    NSPoint lastCalc;
+}
+/// How many touches to average (maximum)
+@property (nonatomic, assign) NSInteger smoothLength;
+/// The touch array
+@property (nonatomic, strong) NSMutableArray *points;
+
 + (instancetype)pointSmootherWithSmoothLength:(NSInteger)smoothLength;
 
+- (void)commonInit;
 - (void)setSmoothLength:(NSInteger)newSmoothLength;
 - (NSInteger)getSmoothLength;
 - (void)addPoint:(NSPoint)point;
 - (NSPoint)getSmoothedPoint;
 - (void)clearPoints;
+@end
+
+@implementation SWPointSmoother
+
+@synthesize smoothLength, points;
+
++ (instancetype)pointSmootherWithSmoothLength:(NSInteger)smoothLength
+{
+    UCPointSmoother *p = [UCPointSmoother new];
+    [p setSmoothLength:smoothLength];
+    return p;
+}
+
+- (id)init
+{
+    if (self = [super init]) {
+        [self commonInit];
+    }
+    return self;
+}
+- (void)commonInit
+{
+    [self setSmoothLength:1];
+    lastCalc = NSMakePoint(0, 0);
+}
+
+- (void)setSmoothLength:(NSInteger)newSmoothLength
+{
+    // TODO copy over some values from old points?
+    smoothLength = newSmoothLength;
+    self.points = [NSMutableArray arrayWithCapacity:newSmoothLength];
+    needsCalc = YES;
+}
+- (NSInteger)getSmoothLength
+{
+    return smoothLength;
+}
+
+- (void)addPoint:(NSPoint)point
+{
+    if (self.points.count == smoothLength) [self.points removeObjectAtIndex:0];
+    [self.points addObject:[NSValue valueWithPoint:point]];
+    needsCalc = YES;
+}
+
+- (NSPoint)getSmoothedPoint
+{
+    if (!needsCalc) return lastCalc;
+    
+    float xSum = 0;
+    float ySum = 0;
+    for (int i=0; i<self.points.count; i++) {
+        NSPoint p = [(NSValue *)[self.points objectAtIndex:i] pointValue];
+        xSum += p.x;
+        ySum += p.y;
+    }
+    
+    needsCalc = NO;
+    
+    lastCalc = NSMakePoint(xSum/self.points.count,
+                           ySum/self.points.count);
+    return lastCalc;
+}
+
+- (void)clearPoints
+{
+    self.points = [NSMutableArray arrayWithCapacity:smoothLength];
+}
+
 @end
 
 @interface SWTouchScrollCollectionView()
