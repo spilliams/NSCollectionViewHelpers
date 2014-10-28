@@ -9,7 +9,7 @@
 
 @class SWTouchScrollCollectionView;
 
-typedef NS_ENUM(NSUInteger, UCTouchScrollDirection) {
+typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
     SWTouchScrollDirectionHorizontal,
     SWTouchScrollDirectionVertical,
     SWTouchScrollDirectionBoth

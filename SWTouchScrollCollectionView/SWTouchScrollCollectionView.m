@@ -42,7 +42,7 @@
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
 {
-    self.pointSmoother = [SWPointSmoother pointSmootherWithLength:smootherLength];
+    self.pointSmoother = [SWPointSmoother pointSmootherWithSmoothLength:smootherLength];
 }
 
 #define kSWEnableTouchVelocity NO
