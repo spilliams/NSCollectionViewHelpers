@@ -8,7 +8,7 @@
 #import "SWCollectionViewStaggeredGridLayout.h"
 
 #define LOG NO
-#define LOG_IN_RECT LOG&&NO
+#define LOG_IN_RECT NO
 
 // A lot of this implementation is copypasta from JNWCollectionViewGridLayout.m
 // but I'm not sure of a better way to structure things without forking JNW and
@@ -242,50 +242,55 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 {
     // I assume rect is defined in the coordinate space of the entire collection view
     
-    if (LOG_IN_RECT) NSLog(@"[layout] indexPathsForItemsInRect: {%f, %f, %f, %f}",
-                           rect.origin.x,
-                           rect.origin.y,
-                           rect.size.width,
-                           rect.size.height);
+    if (LOG_IN_RECT) {
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"[layout] indexPathsForItemsInRect: {%f, %f, %f, %f}",
+              rect.origin.x,
+              rect.origin.y,
+              rect.size.width,
+              rect.size.height);
+    }
+    
     NSMutableArray *indexPaths = [NSMutableArray array];
     
+    // loop over the sections
     for (NSUInteger sectionIndex = 0; sectionIndex < self.sections.count; sectionIndex++) {
         
         // first check if section is in rect
         if (!CGRectIntersectsRect([self rectForSectionAtIndex:sectionIndex], rect)) continue;
         if (LOG_IN_RECT) NSLog(@"  section %i is in rect", (int)sectionIndex);
-        JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
         
+        // section is in rect, so get its details
+        JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
         NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView
                                                                                     section:sectionIndex];
+        
+        // subtract section header from rect's y
+        rect.origin.y -= sectionInfo.headerHeight;
+        
+        // and loop over columns. Assume all columns are in the rect
         for (NSUInteger columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
             NSArray *column = [sectionInfo.columns objectAtIndex:columnIndex];
             
             if (!column.count) continue;
             
+            if (LOG_IN_RECT) NSLog(@"    column %i has items", (int)columnIndex);
+            
+            // use a helper method to determine the top and bottom item in the rect
             NSInteger topItem = [self nearestIntersectingItemInColumn:column inRect:rect edge:SWColumnEdgeTop];
             NSInteger bottomItem = [self nearestIntersectingItemInColumn:column inRect:rect edge:SWColumnEdgeBottom];
             
             for (NSInteger item = topItem; item <= bottomItem; item++) {
                 [indexPaths addObject:[(SWCollectionViewStaggeredGridLayoutColumnItemInfo *)[column objectAtIndex:item] indexPath]];
             }
-            
-//            for (NSUInteger item = 0; item < column.count; item++) {
-//                SWCollectionViewStaggeredGridLayoutColumnItemInfo *itemInfo = [column objectAtIndex:item];
-//                
-//                // FIXME: play with various edge insets, header and footer heights.
-//                // I'm not sure this algebra holds up.
-//                // item origin already includes edge insets, but I'm not sure we need
-//                // to add collection view frame origin?
-//                CGRect itemRect = CGRectMake(itemInfo.origin.x + self.collectionView.frame.origin.x,
-//                                             itemInfo.origin.y + sectionInfo.offset + self.collectionView.frame.origin.y,
-//                                             itemInfo.size.width,
-//                                             itemInfo.size.height);
-//                if (CGRectIntersectsRect(itemRect, rect)) {
-//                    if (LOG_IN_RECT) NSLog(@"    item %i is in rect", (int)itemInfo.indexPath.jnw_item);
-//                    [indexPaths addObject:itemInfo.indexPath];
-//                }
-//            } // item loop
         } // column loop
     } // section loop
     return indexPaths;
@@ -368,14 +373,23 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 
 - (NSInteger)nearestIntersectingItemInColumn:(NSArray *)column inRect:(CGRect)containingRect edge:(SWColumnEdge)columnEdge
 {
+    if (LOG_IN_RECT) {
+        NSLog(@"      searching for nearest intersecting item for edge %@", columnEdge == SWColumnEdgeTop ? @"top" : @"bottom");
+        NSLog(@"      column info:");
+        for (SWCollectionViewStaggeredGridLayoutColumnItemInfo *itemInfo in column) {
+            NSLog(@"        y:%f,h:%f", itemInfo.origin.y, itemInfo.size.height);
+        }
+    }
     NSInteger low = 0;
     NSInteger high = column.count;
     NSInteger mid = 0;
     
     CGFloat edgeLocation = (columnEdge == SWColumnEdgeTop ? containingRect.origin.y : containingRect.origin.y + containingRect.size.height);
+    if (LOG_IN_RECT) NSLog(@"        edgeLocation %f", edgeLocation);
     
     while (low <= high) {
         mid = (low + high) / 2;
+        if (LOG_IN_RECT) NSLog(@"        bounds %i,%i,%i", (int)low, (int)high, (int)mid);
         
         if (mid >= column.count) return column.count-1;
         
@@ -384,26 +398,33 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         if (columnEdge == SWColumnEdgeTop) {
             
             if (midInfo.origin.y > edgeLocation) {
+                if (LOG_IN_RECT) NSLog(@"        (top) mid's Y origin (%f) below edge. high=mid-1", midInfo.origin.y);
                 high = mid-1;
             } else if (midInfo.origin.y + midInfo.size.height < edgeLocation) {
+                if (LOG_IN_RECT) NSLog(@"        (top) mid's Y origin + height (%f) above edge. low=mid+1", midInfo.origin.y + midInfo.size.height);
                 low = mid+1;
             } else {
+                if (LOG_IN_RECT) NSLog(@"        (top) mid straddles edge! returning %i", (int)mid);
                 return mid;
             }
             
         } else { // SWColumnEdgeBottom
             
             if (midInfo.origin.y > edgeLocation) {
+                if (LOG_IN_RECT) NSLog(@"        (bottom) mid's Y origin (%f) below edge. high=mid-1", midInfo.origin.y);
                 high = mid-1;
             } else if (midInfo.origin.y + midInfo.size.height < edgeLocation) {
+                if (LOG_IN_RECT) NSLog(@"        (bottom) mid's Y origin + height (%f) above edge. low=mid+1", midInfo.origin.y + midInfo.size.height);
                 low = mid+1;
             } else {
+                if (LOG_IN_RECT) NSLog(@"        (bottom) mid straddles edge! returning %i", (int)mid);
                 return mid;
             }
             
         }
     }
     
+    if (LOG_IN_RECT) NSLog(@"        while condition failed. returning %i", (int)mid);
     return mid;
 }
 
