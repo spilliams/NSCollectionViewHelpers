@@ -128,6 +128,7 @@
         NSColor *backgroundColor = [NSColor whiteColor];
         if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(backgroundColorForTouchScrollCollectionView:)]) {
             backgroundColor = [self.scrollDelegate backgroundColorForTouchScrollCollectionView:self];
+            [self setDrawsBackground:NO];
         }
         self.documentView = [[SWCollectionViewDocumentView alloc] initWithFrame:CGRectZero backgroundColor:backgroundColor];
         documentViewSet = YES;
