@@ -93,7 +93,7 @@ The scroll scaling lets you scroll by a factor of the perceived scroll distance.
 These are standard data source methods for a JNWCollectionView. They should be documented within that package.
 
     #pragma mark JNWCollectionViewDelegate Protocol
-
+    
     - (void)collectionView:(JNWCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
     {
         // handle what happens when a cell is selected
@@ -103,7 +103,7 @@ This is a standard delegate method for a JNWCollectionView.
 
 I won't cover my custom layout delegate protocols here, see other parts of this repository for those. You will almost definitely have to implement some kind of layout delegate methods, at least to give the cells their size.
 
-Finally, we come to the SWTouchScroll delegates:
+Finally, we come to the SWTouchScrollCollectionViewDelegate. These methods are all optional:
 
     #pragma mark SWTouchScrollCollectionViewDelegate Protocol
     
@@ -117,11 +117,14 @@ Finally, we come to the SWTouchScroll delegates:
         // here you can choose to respond to the collection view ending a scroll
     }
     
-    #pragma mark SWPullToRefreshDelegate Protocol
-    
-    - (void)scrollViewReachedBottom:(UCTouchScrollCollectionView *)scrollView
+    - (void)touchScrollCollectionViewReachedBottom:(UCTouchScrollCollectionView *)touchScrollCollectionView
     {
         // Here you can choose to respond to a collection view reaching its bottom.
+    }
+    
+    - (NSColor *)backgroundColorForTouchScrollCollectionView:(SWTouchScrollCollectionView *)touchScrollCollectionView
+    {
+        // Here you can choose to give a collection view a background color. Otherwise it will be white.
     }
 
 I think these implementations are pretty self-explanatory.

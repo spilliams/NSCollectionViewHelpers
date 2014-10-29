@@ -12,8 +12,7 @@
 #import <QuartzCore/CAMediaTimingFunction.h>
 
 #define LOG YES
-
-@interface SWPointSmoother : NSObject
+@interface SWPointSmoother ()
 {
     BOOL needsCalc;
     NSPoint lastCalc;
@@ -22,15 +21,7 @@
 @property (nonatomic, assign) NSInteger smoothLength;
 /// The touch array
 @property (nonatomic, strong) NSMutableArray *points;
-
-+ (instancetype)pointSmootherWithSmoothLength:(NSInteger)smoothLength;
-
 - (void)commonInit;
-- (void)setSmoothLength:(NSInteger)newSmoothLength;
-- (NSInteger)getSmoothLength;
-- (void)addPoint:(NSPoint)point;
-- (NSPoint)getSmoothedPoint;
-- (void)clearPoints;
 @end
 
 @implementation SWPointSmoother
@@ -134,7 +125,11 @@
     [super awakeFromNib];
     
     if (!documentViewSet) {
-        self.documentView = [[SWCollectionViewDocumentView alloc] initWithFrame:CGRectZero backgroundColor:[NSColor colorWithCalibratedRed:26/255.0 green:26/255.0 blue:26/255.0 alpha:1]];
+        NSColor *backgroundColor = [NSColor whiteColor];
+        if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(backgroundColorForTouchScrollCollectionView:)]) {
+            backgroundColor = [self.scrollDelegate backgroundColorForTouchScrollCollectionView:self];
+        }
+        self.documentView = [[SWCollectionViewDocumentView alloc] initWithFrame:CGRectZero backgroundColor:backgroundColor];
         documentViewSet = YES;
     }
 }
@@ -273,17 +268,20 @@
         
         [self.pointSmoother addPoint:scrollPt];
         NSPoint smoothedPoint = [self.pointSmoother getSmoothedPoint];
-//        if (LOG) NSLog(@"%@",NSStringFromPoint(smoothedPoint));
         [self.contentView scrollPoint:smoothedPoint];
         
-        CGFloat end = self.clipView.documentRect.size.height - self.frame.size.height;
-        CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
-        if (smoothedPoint.y + threshold >= end &&
-            !refreshDelegateTriggered) {
-            if (LOG) NSLog(@"trigger pull to refresh");
-            refreshDelegateTriggered = YES;
-            [self.refreshDelegate scrollViewReachedBottom:self];
+        // notify the delegate, if necessary
+        if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollCollectionViewReachedBottom:)]) {
+            CGFloat end = self.clipView.documentRect.size.height - self.frame.size.height;
+            CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
+            if (smoothedPoint.y + threshold >= end &&
+                !refreshDelegateTriggered) {
+                if (LOG) NSLog(@"trigger pull to refresh");
+                refreshDelegateTriggered = YES;
+                [self.scrollDelegate touchScrollCollectionViewReachedBottom:self];
+            }
         }
+        
     }
 }
 
