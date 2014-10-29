@@ -6,12 +6,15 @@
 //
 
 #import "SWTouchScrollCollectionView.h"
+#import "SWCollectionViewDocumentView.h"
+
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
 
 #define LOG YES
 
-@interface SWPointSmoother : NSObject {
+@interface SWPointSmoother : NSObject
+{
     BOOL needsCalc;
     NSPoint lastCalc;
 }
@@ -104,6 +107,7 @@
     NSPoint touchStartPt;
     NSPoint startOrigin;
     BOOL refreshDelegateTriggered;
+    BOOL documentViewSet;
 }
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
 @end
@@ -113,9 +117,31 @@
 - (instancetype)initWithCoder:(NSCoder *)coder
 {
     if (self = [super initWithCoder:coder]) {
-        refreshDelegateTriggered = NO;
+        [self commonInit];
     }
     return self;
+}
+- (instancetype)initWithFrame:(NSRect)frameRect
+{
+    if (self = [super initWithFrame:frameRect]) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    if (!documentViewSet) {
+        self.documentView = [[SWCollectionViewDocumentView alloc] initWithFrame:CGRectZero backgroundColor:[NSColor colorWithCalibratedRed:26/255.0 green:26/255.0 blue:26/255.0 alpha:1]];
+        documentViewSet = YES;
+    }
+}
+
+- (void)commonInit
+{
+    refreshDelegateTriggered = NO;
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
