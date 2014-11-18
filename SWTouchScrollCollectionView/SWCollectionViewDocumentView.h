@@ -8,6 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 
+/// A document view to replace JNWCollectionViewDocumentView (adds support for background color in Yosemite)
 @interface SWCollectionViewDocumentView : NSView
+/// Initializes a new document view with a specified background color
+/// @param  frameRect   The view's frame
+/// @param  backgroundColor The view's background color
 - (instancetype)initWithFrame:(NSRect)frameRect backgroundColor:(NSColor *)backgroundColor;
 @end

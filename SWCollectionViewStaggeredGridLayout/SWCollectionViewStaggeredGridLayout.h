@@ -9,7 +9,14 @@
 
 /// Staggered grid layout delegates should respond to methods about the grid layout values
 @protocol SWCollectionViewStaggeredGridLayoutDelegate <NSObject>
+/// @param  collectionView  The collection view
+/// @param  section         The section
+/// @return The number of columns in a particular section
 - (NSInteger)numberOfColumnsInCollectionView:(JNWCollectionView *)collectionView section:(NSInteger)section;
+/// @param  collectionView  The collection view
+/// @param  cellWidth       The cell's width
+/// @param  indexPath       The index path
+/// @return The height for a particular cell with a specified width
 - (CGFloat)collectionView:(JNWCollectionView *)collectionView
        heightForCellWidth:(CGFloat)cellWidth
               atIndexPath:(NSIndexPath *)indexPath;

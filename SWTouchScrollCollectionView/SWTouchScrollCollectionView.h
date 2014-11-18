@@ -9,11 +9,15 @@
 
 @class SWTouchScrollCollectionView;
 
-/// A scroll direction. Used do limit a collection view to only touch-scrolling along specific axes.
+/// A scroll direction. This is used to limit a collection view to only touch-scrolling along specific axes.
 typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
+    /// Horizontal
     SWTouchScrollDirectionHorizontal,
+    /// Vertical
     SWTouchScrollDirectionVertical,
+    /// Both horizontal and vertical
     SWTouchScrollDirectionBoth
+    // "none" isn't represented here because if it doesn't scroll, why does it need to touch-scroll?
 };
 
 /// A touch-scroll collection view delegate.
@@ -45,7 +49,7 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 /// @param  recognizer The recognizer event to handle
 - (void)handlePanGesture:(NSPanGestureRecognizer *)recognizer;
 /// Gives this touch-scroll collection view a new point-smoother of a specific length
-/// @param  smootherLength
+/// @param  smootherLength  The length of the smoother
 /// @see    SWPointSmoother
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength;
 
