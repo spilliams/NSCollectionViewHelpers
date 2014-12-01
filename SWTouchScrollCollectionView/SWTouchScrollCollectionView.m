@@ -98,7 +98,6 @@
     NSPoint touchStartPt;
     NSPoint startOrigin;
     BOOL refreshDelegateTriggered;
-    BOOL documentViewSet;
 }
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
 @end
@@ -120,23 +119,7 @@
     return self;
 }
 
-- (void)awakeFromNib
-{
-    [super awakeFromNib];
-    
-    if (!documentViewSet) {
-        NSColor *backgroundColor = [NSColor whiteColor];
-        if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(backgroundColorForTouchScrollCollectionView:)]) {
-            backgroundColor = [self.scrollDelegate backgroundColorForTouchScrollCollectionView:self];
-            [self setDrawsBackground:NO];
-        }
-        self.documentView = [[SWCollectionViewDocumentView alloc] initWithFrame:CGRectZero backgroundColor:backgroundColor];
-        documentViewSet = YES;
-    }
-}
-
-- (void)commonInit
-{
+- (void)commonInit {
     refreshDelegateTriggered = NO;
 }
 

@@ -5,7 +5,7 @@
 //  This is free and unencumbered software released into the public domain.
 //
 
-#import <JNWCollectionView/JNWCollectionView.h>
+#import "SWCollectionView.h"
 
 @class SWTouchScrollCollectionView;
 
@@ -23,9 +23,6 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 /// A touch-scroll collection view delegate.
 @protocol SWTouchScrollCollectionViewDelegate <NSObject>
 @optional
-/// @param  touchScrollCollectionView The touch-scroll collection view
-/// @return The touch-scroll collection view's background color
-- (NSColor *)backgroundColorForTouchScrollCollectionView:(SWTouchScrollCollectionView *)touchScrollCollectionView;
 /// Fires when the touch-scroll collection view reaches its bottom
 /// @param  touchScrollCollectionView The touch-scroll collection view
 - (void)touchScrollCollectionViewReachedBottom:(SWTouchScrollCollectionView *)touchScrollCollectionView;
@@ -38,7 +35,7 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 @end
 
 /// A collection view that may be scrolled by a click-drag gesture in addition to a normal scroll gesture
-@interface SWTouchScrollCollectionView : JNWCollectionView
+@interface SWTouchScrollCollectionView : SWCollectionView
 /// Its delegate
 @property (weak) IBOutlet id<SWTouchScrollCollectionViewDelegate>scrollDelegate;
 /// A factor to multiply "perceived" scroll distance by, to result in final view scroll distance

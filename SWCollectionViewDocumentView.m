@@ -9,7 +9,6 @@
 #import "SWCollectionViewDocumentView.h"
 
 @interface SWCollectionViewDocumentView ()
-@property (nonatomic, strong) NSColor *backgroundColor;
 @end
 
 @implementation SWCollectionViewDocumentView
