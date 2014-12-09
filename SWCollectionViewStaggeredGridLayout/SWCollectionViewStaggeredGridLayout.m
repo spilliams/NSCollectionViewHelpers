@@ -17,7 +17,7 @@
 typedef struct {
     CGPoint origin;
     CGSize size;
-} JNWCollectionViewGridLayoutItemInfo;
+} SWCollectionViewGridLayoutItemInfo;
 
 typedef NS_ENUM(NSInteger, SWColumnEdge) {
     SWColumnEdgeTop,
@@ -35,7 +35,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 
 // identical to that in JNWCollectionViewGridLayout with the following exceptions:
 // `columns` property contains column data ("which index paths are in each column")
-@interface JNWCollectionViewGridLayoutSection : NSObject
+@interface SWCollectionViewGridLayoutSection : NSObject
 - (instancetype)initWithNumberOfItems:(NSInteger)numberOfItems;
 /// The y offset of the section
 @property (nonatomic, assign) CGFloat offset;
@@ -48,19 +48,19 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 @property (nonatomic, assign) NSInteger index;
 @property (nonatomic, assign) NSInteger numberOfItems;
 /// A pointer to the first item in a C array of itemInfo structs
-@property (nonatomic, assign) JNWCollectionViewGridLayoutItemInfo *itemInfo;
+@property (nonatomic, assign) SWCollectionViewGridLayoutItemInfo *itemInfo;
 
 @property (nonatomic, strong) NSArray *columns;
 @end
 
-@implementation JNWCollectionViewGridLayoutSection
+@implementation SWCollectionViewGridLayoutSection
 
 - (instancetype)initWithNumberOfItems:(NSInteger)numberOfItems {
     self = [super init];
     if (self == nil) return nil;
     
     _numberOfItems = numberOfItems;
-    self.itemInfo = calloc(numberOfItems, sizeof(JNWCollectionViewGridLayoutItemInfo));
+    self.itemInfo = calloc(numberOfItems, sizeof(SWCollectionViewGridLayoutItemInfo));
     return self;
 }
 
@@ -142,7 +142,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         if (LOG) NSLog(@"    footerHeight %li", (long)footerHeight);
         
         // set up section info object
-        JNWCollectionViewGridLayoutSection *sectionInfo = [[JNWCollectionViewGridLayoutSection alloc] initWithNumberOfItems:numberOfItems];
+        SWCollectionViewGridLayoutSection *sectionInfo = [[SWCollectionViewGridLayoutSection alloc] initWithNumberOfItems:numberOfItems];
         sectionInfo.offset = totalHeight + headerHeight + sectionInsets.top;
         sectionInfo.height = 0;
         sectionInfo.index = section;
@@ -225,8 +225,8 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 
 - (JNWCollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    JNWCollectionViewGridLayoutSection *section = self.sections[indexPath.jnw_section];
-    JNWCollectionViewGridLayoutItemInfo itemInfo = section.itemInfo[indexPath.jnw_item];
+    SWCollectionViewGridLayoutSection *section = self.sections[indexPath.jnw_section];
+    SWCollectionViewGridLayoutItemInfo itemInfo = section.itemInfo[indexPath.jnw_item];
     CGFloat offset = section.offset;
     
     JNWCollectionViewLayoutAttributes *attributes = [[JNWCollectionViewLayoutAttributes alloc] init];
@@ -269,7 +269,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         if (LOG_IN_RECT) NSLog(@"  section %i is in rect", (int)sectionIndex);
         
         // section is in rect, so get its details
-        JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
+        SWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
         NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView
                                                                                     section:sectionIndex];
         
@@ -300,7 +300,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 {
     // determine which column the item is in
     NSInteger section = currentIndexPath.jnw_section;
-    JNWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:section];
+    SWCollectionViewGridLayoutSection *sectionInfo = [self.sections objectAtIndex:section];
     NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView section:section];
     
     for (NSUInteger columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
@@ -318,12 +318,12 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
                 
                 // The cases where the "next item" is in a different section of the data
                 if (direction == JNWCollectionViewDirectionUp && item == 0) {
-                    JNWCollectionViewGridLayoutSection *nextSectionInfo = [self.sections objectAtIndex:section-1];
+                    SWCollectionViewGridLayoutSection *nextSectionInfo = [self.sections objectAtIndex:section-1];
                     SWCollectionViewStaggeredGridLayoutColumnItemInfo *nextItemInfo = [[nextSectionInfo.columns objectAtIndex:columnIndex] lastObject];
                     return nextItemInfo.indexPath;
                 }
                 if (direction == JNWCollectionViewDirectionDown && item == column.count-1) {
-                    JNWCollectionViewGridLayoutSection *nextSectionInfo = [self.sections objectAtIndex:section+1];
+                    SWCollectionViewGridLayoutSection *nextSectionInfo = [self.sections objectAtIndex:section+1];
                     SWCollectionViewStaggeredGridLayoutColumnItemInfo *nextItemInfo = [[nextSectionInfo.columns objectAtIndex:columnIndex] firstObject];
                     return nextItemInfo.indexPath;
                 }
