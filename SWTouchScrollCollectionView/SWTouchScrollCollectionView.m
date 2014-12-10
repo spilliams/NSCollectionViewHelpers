@@ -148,7 +148,7 @@
         
         touchStartPt = location;
         startOrigin = [(NSClipView*)self documentVisibleRect].origin;
-        if (LOG) NSLog(@"start origin: %@, touch start: %@",
+        if (LOG) NSLog(@"[TSCV] start origin: %@, touch start: %@",
                        NSStringFromPoint(startOrigin),
                        NSStringFromPoint(touchStartPt));
         
@@ -183,21 +183,22 @@
             CGFloat maxDisplacement = self.contentView.frame.size.height - startOrigin.y - self.frame.size.height;
             
             if (LOG) {
-                NSLog(@"scroll height %f",self.contentView.frame.size.height);
-                NSLog(@"container height %f",self.frame.size.height);
-                NSLog(@"current position %f",currentY);
-                NSLog(@"max displacement %f",maxDisplacement);
-                NSLog(@"velocity %f",velocity);
-                NSLog(@"displacement %f",displacement);
-                NSLog(@"projected final position %f",displacedY);
+                NSLog(@"[TSCV] pan ended");
+                NSLog(@"  scroll height %f",self.contentView.frame.size.height);
+                NSLog(@"  container height %f",self.frame.size.height);
+                NSLog(@"  current position %f",currentY);
+                NSLog(@"  max displacement %f",maxDisplacement);
+                NSLog(@"  velocity %f",velocity);
+                NSLog(@"  displacement %f",displacement);
+                NSLog(@"  projected final position %f",displacedY);
             }
             
             NSString *animationKeyPath = @"position.y";
             
             if (displacement == 0) {
-                if (LOG) NSLog(@"no animation needed");
+                if (LOG) NSLog(@"  no animation needed");
             } else if (displacedY < 0) {
-                if (LOG) NSLog(@"final position less than 0");
+                if (LOG) NSLog(@"  final position less than 0");
                 displacedY = 0;
                 CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:animationKeyPath];
                 animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
@@ -217,14 +218,14 @@
                 [self.layer addAnimation:animation forKey:animationKeyPath];
                 
             } else if (displacedY > maxDisplacement) {
-                if (LOG) NSLog(@"final position greater than max");
+                if (LOG) NSLog(@"  final position greater than max");
             } else {
                 CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:animationKeyPath];
                 animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
                 animation.duration = time;
                 animation.fromValue = [NSNumber numberWithFloat:currentY];
                 animation.toValue = [NSNumber numberWithFloat:displacedY];
-                if (LOG) NSLog(@"animating from %f to %f",[animation.fromValue floatValue],[animation.toValue floatValue]);
+                if (LOG) NSLog(@"  animating from %f to %f",[animation.fromValue floatValue],[animation.toValue floatValue]);
                 [animation setDelegate:self];
                 [self.layer setValue:[NSNumber numberWithFloat:displacedY] forKeyPath:animationKeyPath];
                 [self.layer addAnimation:animation forKey:animationKeyPath];
@@ -260,7 +261,7 @@
             CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
             if (smoothedPoint.y + threshold >= end &&
                 !refreshDelegateTriggered) {
-                if (LOG) NSLog(@"trigger pull to refresh");
+                if (LOG) NSLog(@"  trigger pull to refresh");
                 refreshDelegateTriggered = YES;
                 [self.scrollDelegate touchScrollCollectionViewReachedBottom:self];
             }
