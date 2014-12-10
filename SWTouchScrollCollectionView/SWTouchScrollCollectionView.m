@@ -121,6 +121,10 @@
 
 - (void)commonInit {
     refreshDelegateTriggered = NO;
+    
+    NSPanGestureRecognizer *panGR = [[NSPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+    [panGR setDelegate:self];
+    [self addGestureRecognizer:panGR];
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength

@@ -11,4 +11,4 @@ These layouts are for use with [JNWCollectionView](https://github.com/jwilling/J
 
 ##Other Helpers
 
-- SWTouchScrollCollectionView: for when you want a click-drag to scroll your collection view as well as the normal scroll methods. There's some weird workarounds in this one because the tablet hardware I was using at the time was very unreliable. Usage is currently very janky, it requires external pan GRs (in case the view controller contains multiple CVs, and a pan gesture that starts in one and ends in another needs to still scroll the former)
+- SWTouchScrollCollectionView: for when you want a click-drag to scroll your collection view in addition to the normal scroll. There's some weird workarounds in this one because the tablet hardware I was using at the time was very unreliable.

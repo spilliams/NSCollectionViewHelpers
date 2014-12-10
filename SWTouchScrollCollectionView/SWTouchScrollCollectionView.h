@@ -35,7 +35,7 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 @end
 
 /// A collection view that may be scrolled by a click-drag gesture in addition to a normal scroll gesture
-@interface SWTouchScrollCollectionView : SWCollectionView
+@interface SWTouchScrollCollectionView : SWCollectionView <NSGestureRecognizerDelegate>
 /// Its delegate
 @property (weak) IBOutlet id<SWTouchScrollCollectionViewDelegate>scrollDelegate;
 /// A factor to multiply "perceived" scroll distance by, to result in final view scroll distance
