@@ -123,7 +123,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
                        sectionInsets.bottom,
                        sectionInsets.right);
         CGFloat columnsWidth = totalWidth - sectionInsets.left - sectionInsets.right;
-        CGFloat itemWidth = (columnsWidth / numberOfColumns) - self.itemHorizontalMargin;
+        CGFloat itemWidth = (columnsWidth / numberOfColumns) - self.itemHorizontalMargin * (1 - 1/(float)numberOfColumns);
         if (LOG) NSLog(@"    item width %f", itemWidth);
         
         // set up column data object
@@ -185,7 +185,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
             if (LOG && logItems) NSLog(@"      picked column %i (%i tall). %@", (int)shortestColumnIndex, (int)shortestColumnHeight, columnHeightsString);
             
             // set the item's origin
-            origin.x = sectionInsets.left + self.itemHorizontalMargin * 0.5 + shortestColumnIndex * (itemWidth + self.itemHorizontalMargin);
+            origin.x = sectionInsets.left + shortestColumnIndex * (itemWidth + self.itemHorizontalMargin);
             origin.y = shortestColumnHeight;
             sectionInfo.itemInfo[item].origin = origin;
             sectionInfo.itemInfo[item].size = CGSizeMake(itemWidth, itemHeight);
