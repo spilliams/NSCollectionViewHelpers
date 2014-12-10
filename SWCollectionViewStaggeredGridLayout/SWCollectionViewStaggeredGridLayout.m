@@ -275,6 +275,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         
         // subtract section header from rect's y
         rect.origin.y -= sectionInfo.headerHeight;
+        rect.size.height += sectionInfo.headerHeight;
         
         // and loop over columns. Assume all columns are in the rect
         for (NSUInteger columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
@@ -374,7 +375,9 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
 - (NSInteger)nearestIntersectingItemInColumn:(NSArray *)column inRect:(CGRect)containingRect edge:(SWColumnEdge)columnEdge
 {
     if (LOG_IN_RECT) {
-        NSLog(@"      searching for nearest intersecting item for edge %@", columnEdge == SWColumnEdgeTop ? @"top" : @"bottom");
+        NSLog(@"      searching for nearest intersecting item for edge %@ in rect %@",
+              columnEdge == SWColumnEdgeTop ? @"top" : @"bottom",
+              NSStringFromRect(containingRect));
         NSLog(@"      column info:");
         for (SWCollectionViewStaggeredGridLayoutColumnItemInfo *itemInfo in column) {
             NSLog(@"        y:%f,h:%f", itemInfo.origin.y, itemInfo.size.height);
@@ -384,7 +387,10 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
     NSInteger high = column.count;
     NSInteger mid = 0;
     
-    CGFloat edgeLocation = (columnEdge == SWColumnEdgeTop ? containingRect.origin.y : containingRect.origin.y + containingRect.size.height);
+    CGFloat edgeLocation = containingRect.origin.y;
+    if (columnEdge == SWColumnEdgeBottom) {
+        edgeLocation += containingRect.size.height;
+    }
     if (LOG_IN_RECT) NSLog(@"        edgeLocation %f", edgeLocation);
     
     while (low <= high) {
