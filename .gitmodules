@@ -1,0 +1,3 @@
+[submodule "JNWCollectionView"]
+	path = JNWCollectionView
+	url = https://github.com/spilliams/JNWCollectionView.git
