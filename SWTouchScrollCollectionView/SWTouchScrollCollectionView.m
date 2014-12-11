@@ -6,7 +6,6 @@
 //
 
 #import "SWTouchScrollCollectionView.h"
-#import "SWCollectionViewDocumentView.h"
 
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
