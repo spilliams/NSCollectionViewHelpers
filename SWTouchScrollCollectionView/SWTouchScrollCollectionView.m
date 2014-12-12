@@ -10,7 +10,7 @@
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
 
-#define LOG YES
+#define LOG NO
 @interface SWPointSmoother ()
 {
     BOOL needsCalc;
