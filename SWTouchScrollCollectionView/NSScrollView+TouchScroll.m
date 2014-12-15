@@ -1,16 +1,18 @@
 //
-//  SWTouchScrollCollectionView.m
+//  NSScrollView+TouchScroll.m
+//  CurrentScience
 //
-//  Created by Spencer Williams on 8/22/14.
-//  This is free and unencumbered software released into the public domain.
+//  Created by Spencer Williams on 12/15/14.
+//  Copyright (c) 2014 Uncorked Studios. All rights reserved.
 //
 
-#import "SWTouchScrollCollectionView.h"
+#import "NSScrollView+TouchScroll.h"
 
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
 
 #define LOG NO
+
 @interface SWPointSmoother ()
 {
     BOOL needsCalc;
@@ -92,38 +94,31 @@
 
 @end
 
-@interface SWTouchScrollCollectionView()
-{
-    NSPoint touchStartPt;
-    NSPoint startOrigin;
-    BOOL refreshDelegateTriggered;
-}
+@interface NSScrollView()
+
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
+
+@property (nonatomic, strong) NSPanGestureRecognizer *panGR;
+@property (nonatomic, assign) NSPoint touchStartPt;
+@property (nonatomic, assign) NSPoint startOrigin;
+@property (nonatomic, assign) BOOL refreshDelegateTriggered;
 @end
 
-@implementation SWTouchScrollCollectionView
-
-- (instancetype)initWithCoder:(NSCoder *)coder
+@implementation NSScrollView(TouchScroll)
+@dynamic  scrollScaling, scrollDirection, scrollDelegate;
+- (NSClipView *)clipView
 {
-    if (self = [super initWithCoder:coder]) {
-        [self commonInit];
-    }
-    return self;
-}
-- (instancetype)initWithFrame:(NSRect)frameRect
-{
-    if (self = [super initWithFrame:frameRect]) {
-        [self commonInit];
-    }
-    return self;
+    return self.contentView;
 }
 
-- (void)commonInit {
-    refreshDelegateTriggered = NO;
+- (void)initializeTouchScrollable {
+    self.refreshDelegateTriggered = NO;
     
-    NSPanGestureRecognizer *panGR = [[NSPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
-    [panGR setDelegate:self];
-    [self addGestureRecognizer:panGR];
+    if (self.panGR == nil) {
+        NSPanGestureRecognizer *panGR = [[NSPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+        [panGR setDelegate:self];
+        [self addGestureRecognizer:panGR];
+    }
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
@@ -144,16 +139,16 @@
     if (recognizer.state == NSGestureRecognizerStateBegan) {
         
         if (self.scrollDelegate != nil &&
-            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollCollectionViewDelegate)] &&
-            [self.scrollDelegate respondsToSelector:@selector(touchScrollCollectionViewWillStartScrolling:)]) {
-            [self.scrollDelegate touchScrollCollectionViewWillStartScrolling:self];
+            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
+            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewWillStartScrolling:)]) {
+            [self.scrollDelegate touchScrollViewWillStartScrolling:self];
         }
         
-        touchStartPt = location;
-        startOrigin = [(NSClipView*)self documentVisibleRect].origin;
-        if (LOG) NSLog(@"[TSCV] start origin: %@, touch start: %@",
-                       NSStringFromPoint(startOrigin),
-                       NSStringFromPoint(touchStartPt));
+        self.touchStartPt = location;
+        self.startOrigin = [(NSClipView*)self documentVisibleRect].origin;
+        if (LOG) NSLog(@"[TS] start origin: %@, touch start: %@",
+                       NSStringFromPoint(self.startOrigin),
+                       NSStringFromPoint(self.touchStartPt));
         
     } else if (recognizer.state == NSGestureRecognizerStateEnded) {
         
@@ -177,16 +172,16 @@
             // determine relevant values
             CGFloat velocity = [recognizer velocityInView:self.contentView].y;
             CGFloat time = 0.2;
-    //        CGFloat acceleration = -velocity/time;
-            CGFloat currentY = (startOrigin.y - self.scrollScaling.y * (location.y - touchStartPt.y));
+            //        CGFloat acceleration = -velocity/time;
+            CGFloat currentY = (self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
             CGFloat displacement = 0.5 * velocity * time;
             CGFloat displacedY = currentY + displacement;
             
             // scroll height - current - screen size
-            CGFloat maxDisplacement = self.contentView.frame.size.height - startOrigin.y - self.frame.size.height;
+            CGFloat maxDisplacement = self.contentView.frame.size.height - self.startOrigin.y - self.frame.size.height;
             
             if (LOG) {
-                NSLog(@"[TSCV] pan ended");
+                NSLog(@"[TS] pan ended");
                 NSLog(@"  scroll height %f",self.contentView.frame.size.height);
                 NSLog(@"  container height %f",self.frame.size.height);
                 NSLog(@"  current position %f",currentY);
@@ -237,19 +232,19 @@
         
         [self.pointSmoother clearPoints];
         
-        refreshDelegateTriggered = NO;
+        self.refreshDelegateTriggered = NO;
         
         if (self.scrollDelegate != nil &&
-            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollCollectionViewDelegate)] &&
-            [self.scrollDelegate respondsToSelector:@selector(touchScrollCollectionViewDidEndScrolling:)]) {
-            [self.scrollDelegate touchScrollCollectionViewDidEndScrolling:self];
+            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
+            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
+            [self.scrollDelegate touchScrollViewDidEndScrolling:self];
         }
         
     } else  if (recognizer.state == NSGestureRecognizerStateChanged) {
         
-        CGFloat dx = startOrigin.x - self.scrollScaling.x * (location.x - touchStartPt.x);
+        CGFloat dx = self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x);
         if (self.scrollDirection == SWTouchScrollDirectionVertical) dx = 0;
-        CGFloat dy = startOrigin.y - self.scrollScaling.y * (location.y - touchStartPt.y);
+        CGFloat dy = self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y);
         if (self.scrollDirection == SWTouchScrollDirectionHorizontal) dy = 0;
         
         NSPoint scrollPt = NSMakePoint(dx, dy);
@@ -259,14 +254,14 @@
         [self.contentView scrollPoint:smoothedPoint];
         
         // notify the delegate, if necessary
-        if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollCollectionViewReachedBottom:)]) {
+        if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewReachedBottom:)]) {
             CGFloat end = self.clipView.documentRect.size.height - self.frame.size.height;
             CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
             if (smoothedPoint.y + threshold >= end &&
-                !refreshDelegateTriggered) {
+                !self.refreshDelegateTriggered) {
                 if (LOG) NSLog(@"  trigger pull to refresh");
-                refreshDelegateTriggered = YES;
-                [self.scrollDelegate touchScrollCollectionViewReachedBottom:self];
+                self.refreshDelegateTriggered = YES;
+                [self.scrollDelegate touchScrollViewReachedBottom:self];
             }
         }
         
@@ -274,3 +269,5 @@
 }
 
 @end
+
+

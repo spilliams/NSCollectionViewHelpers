@@ -1,13 +1,12 @@
 //
-//  SWTouchScrollCollectionView.h
+//  NSScrollView+TouchScroll.h
+//  CurrentScience
 //
-//  Created by Spencer Williams on 8/22/14.
-//  This is free and unencumbered software released into the public domain.
+//  Created by Spencer Williams on 12/15/14.
+//  Copyright (c) 2014 Uncorked Studios. All rights reserved.
 //
 
-#import <JNWCollectionView/JNWCollectionView.h>
-
-@class SWTouchScrollCollectionView;
+#import <AppKit/AppKit.h>
 
 /// A scroll direction. This is used to limit a collection view to only touch-scrolling along specific axes.
 typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
@@ -20,24 +19,11 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
     // "none" isn't represented here because if it doesn't scroll, why does it need to touch-scroll?
 };
 
-/// A touch-scroll collection view delegate.
-@protocol SWTouchScrollCollectionViewDelegate <NSObject>
-@optional
-/// Fires when the touch-scroll collection view reaches its bottom
-/// @param  touchScrollCollectionView The touch-scroll collection view
-- (void)touchScrollCollectionViewReachedBottom:(SWTouchScrollCollectionView *)touchScrollCollectionView;
-/// Fires when the touch-scroll collection view is about to start scrolling
-/// @param  touchScrollCollectionView The touch-scroll collection view
-- (void)touchScrollCollectionViewWillStartScrolling:(SWTouchScrollCollectionView *)touchScrollCollectionView;
-/// Fires when the touch-scroll collection view is finished scrolling
-/// @param  touchScrollCollectionView The touch-scroll collection view
-- (void)touchScrollCollectionViewDidEndScrolling:(SWTouchScrollCollectionView *)touchScrollCollectionView;
-@end
+@protocol SWTouchScrollViewDelegate;
+@protocol SWTouchScrolling <NSObject>
 
-/// A collection view that may be scrolled by a click-drag gesture in addition to a normal scroll gesture
-@interface SWTouchScrollCollectionView : JNWCollectionView <NSGestureRecognizerDelegate>
 /// Its delegate
-@property (weak) IBOutlet id<SWTouchScrollCollectionViewDelegate>scrollDelegate;
+@property (nonatomic, weak) IBOutlet id<SWTouchScrollViewDelegate>scrollDelegate;
 /// A factor to multiply "perceived" scroll distance by, to result in final view scroll distance
 @property (nonatomic, assign) CGPoint scrollScaling;
 /// The direction(s) the view is allowed to scroll
@@ -49,7 +35,26 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 /// @param  smootherLength  The length of the smoother
 /// @see    SWPointSmoother
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength;
+- (void)initializeTouchScrollable;
+@end
 
+/// A touch-scroll view delegate.
+@protocol SWTouchScrollViewDelegate <NSObject>
+@optional
+/// Fires when the touch-scroll collection view reaches its bottom
+/// @param  touchScrollView The touch-scroll collection view
+- (void)touchScrollViewReachedBottom:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+/// Fires when the touch-scroll view is about to start scrolling
+/// @param  touchScrollView The touch-scroll collection view
+- (void)touchScrollViewWillStartScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+/// Fires when the touch-scroll view is finished scrolling
+/// @param  touchScrollView The touch-scroll collection view
+- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+@end
+
+@interface NSScrollView(TouchScroll) <NSGestureRecognizerDelegate, SWTouchScrolling>
+// Returns the scroll view's content view
+- (NSClipView *)clipView;
 @end
 
 /// An object that keeps track of a moving average of a certain number of points
@@ -70,4 +75,5 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 - (NSPoint)getSmoothedPoint;
 /// Clears the smoother of all points
 - (void)clearPoints;
+
 @end
