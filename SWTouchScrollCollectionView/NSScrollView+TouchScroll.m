@@ -11,6 +11,8 @@
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
 
+#import <objc/runtime.h>
+
 #define LOG NO
 
 @interface SWPointSmoother ()
@@ -94,31 +96,62 @@
 
 @end
 
-@interface NSScrollView()
-
-@property (nonatomic, strong) SWPointSmoother *pointSmoother;
-
-@property (nonatomic, strong) NSPanGestureRecognizer *panGR;
-@property (nonatomic, assign) NSPoint touchStartPt;
-@property (nonatomic, assign) NSPoint startOrigin;
-@property (nonatomic, assign) BOOL refreshDelegateTriggered;
-@end
-
 @implementation NSScrollView(TouchScroll)
-@dynamic  scrollScaling, scrollDirection, scrollDelegate;
-- (NSClipView *)clipView
+@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother; // @synthesized in the subclass
+
+#pragma mark - Associated Objects
+
+// http://nshipster.com/associated-objects/
+
+static char kStartOriginKey;
+
+- (void)setTouchStartPt:(NSPoint)touchStartPt
 {
-    return self.contentView;
+    objc_setAssociatedObject(self, &@selector(touchStartPt), [NSValue valueWithPoint:touchStartPt], OBJC_ASSOCIATION_ASSIGN);
 }
+- (NSPoint)touchStartPt
+{
+    return [((NSValue *)objc_getAssociatedObject(self, &@selector(touchStartPt))) pointValue];
+}
+
+- (void)setStartOrigin:(NSPoint)startOrigin
+{
+    objc_setAssociatedObject(self, &kStartOriginKey, [NSValue valueWithPoint:startOrigin], OBJC_ASSOCIATION_ASSIGN);
+}
+- (NSPoint)startOrigin
+{
+    NSValue *startOriginValue = objc_getAssociatedObject(self, &kStartOriginKey);
+    return [startOriginValue pointValue];
+}
+
+- (void)setRefreshDelegateTriggered:(BOOL)refreshDelegateTriggered
+{
+    objc_setAssociatedObject(self, &@selector(refreshDelegateTriggered), [NSNumber numberWithBool:refreshDelegateTriggered], OBJC_ASSOCIATION_ASSIGN);
+}
+- (BOOL)refreshDelegateTriggered
+{
+    return [((NSNumber *)objc_getAssociatedObject(self, &@selector(refreshDelegateTriggered))) boolValue];
+}
+
+#pragma mark - Initialization
 
 - (void)initializeTouchScrollable {
     self.refreshDelegateTriggered = NO;
     
-    if (self.panGR == nil) {
+    BOOL found = NO;
+    for (NSGestureRecognizer *gr in self.gestureRecognizers) {
+        if ([gr isKindOfClass:[NSPanGestureRecognizer class]]
+            && gr.action == @selector(handlePanGesture:)) {
+            found = YES;
+        }
+    }
+    if (!found) {
         NSPanGestureRecognizer *panGR = [[NSPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
         [panGR setDelegate:self];
         [self addGestureRecognizer:panGR];
     }
+    
+    self.startOrigin = NSMakePoint(0, 0);
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
@@ -126,11 +159,11 @@
     self.pointSmoother = [SWPointSmoother pointSmootherWithSmoothLength:smootherLength];
 }
 
+#pragma mark - Touch Grab Scroll stuff
+
 #define kSWEnableTouchVelocity NO
 #define kSWEnablePullToRefresh YES
 #define kSWPullToRefreshScreenFactor 0.1
-
-#pragma mark - Touch Grab Scroll stuff
 
 - (void)handlePanGesture:(NSPanGestureRecognizer *)recognizer
 {
@@ -151,84 +184,6 @@
                        NSStringFromPoint(self.touchStartPt));
         
     } else if (recognizer.state == NSGestureRecognizerStateEnded) {
-        
-        if (kSWEnableTouchVelocity) {
-            /* Some notes here about a future feature: the Scroll Bounce
-             I don't want to have to reinvent the wheel here, but it
-             appears I already am. Crud.
-             
-             1. when the touch ends, get the velocity in view
-             2. Using the velocity and a constant "deceleration" factor, you can determine
-             a. The time taken to decelerate to 0 velocity
-             b. the distance travelled in that time
-             3. If the final scroll point is out of bounds, update it.
-             4. set up an animation block to scroll the document to that point. Make sure it uses the proper easing to feel "natural".
-             5. make sure you retain a pointer or something to that animation so that a touch DURING the animation will cancel it (is this even possible?)
-             */
-            
-            // FIXME this was written way back when the pan GR lived in the collection view, not in the controller's view.
-            
-            
-            // determine relevant values
-            CGFloat velocity = [recognizer velocityInView:self.contentView].y;
-            CGFloat time = 0.2;
-            //        CGFloat acceleration = -velocity/time;
-            CGFloat currentY = (self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
-            CGFloat displacement = 0.5 * velocity * time;
-            CGFloat displacedY = currentY + displacement;
-            
-            // scroll height - current - screen size
-            CGFloat maxDisplacement = self.contentView.frame.size.height - self.startOrigin.y - self.frame.size.height;
-            
-            if (LOG) {
-                NSLog(@"[TS] pan ended");
-                NSLog(@"  scroll height %f",self.contentView.frame.size.height);
-                NSLog(@"  container height %f",self.frame.size.height);
-                NSLog(@"  current position %f",currentY);
-                NSLog(@"  max displacement %f",maxDisplacement);
-                NSLog(@"  velocity %f",velocity);
-                NSLog(@"  displacement %f",displacement);
-                NSLog(@"  projected final position %f",displacedY);
-            }
-            
-            NSString *animationKeyPath = @"position.y";
-            
-            if (displacement == 0) {
-                if (LOG) NSLog(@"  no animation needed");
-            } else if (displacedY < 0) {
-                if (LOG) NSLog(@"  final position less than 0");
-                displacedY = 0;
-                CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:animationKeyPath];
-                animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
-                animation.duration = time;
-                
-                int steps = 100;
-                NSMutableArray *values = [NSMutableArray arrayWithCapacity:steps];
-                double value = currentY;
-                float e = 2.71;
-                for (int t=0; t<steps; t++) {
-                    value = 320 * pow(e, -0.055*t) * cos(0.08*t) + displacedY;
-                    [values addObject:[NSNumber numberWithFloat:value]];
-                }
-                animation.values = values;
-                
-                [self.layer setValue:[NSNumber numberWithFloat:displacedY] forKey:animationKeyPath];
-                [self.layer addAnimation:animation forKey:animationKeyPath];
-                
-            } else if (displacedY > maxDisplacement) {
-                if (LOG) NSLog(@"  final position greater than max");
-            } else {
-                CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:animationKeyPath];
-                animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
-                animation.duration = time;
-                animation.fromValue = [NSNumber numberWithFloat:currentY];
-                animation.toValue = [NSNumber numberWithFloat:displacedY];
-                if (LOG) NSLog(@"  animating from %f to %f",[animation.fromValue floatValue],[animation.toValue floatValue]);
-                [animation setDelegate:self];
-                [self.layer setValue:[NSNumber numberWithFloat:displacedY] forKeyPath:animationKeyPath];
-                [self.layer addAnimation:animation forKey:animationKeyPath];
-            }
-        }
         
         [self.pointSmoother clearPoints];
         
@@ -255,7 +210,7 @@
         
         // notify the delegate, if necessary
         if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewReachedBottom:)]) {
-            CGFloat end = self.clipView.documentRect.size.height - self.frame.size.height;
+            CGFloat end = self.contentView.documentRect.size.height - self.frame.size.height;
             CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
             if (smoothedPoint.y + threshold >= end &&
                 !self.refreshDelegateTriggered) {
