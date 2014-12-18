@@ -42,7 +42,9 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 
 @protocol SWTouchScrollViewDelegate;
 @protocol SWTouchScrolling <NSObject>
-
+@property (nonatomic, assign) NSPoint touchStartPt;
+@property (nonatomic, assign) NSPoint startOrigin;
+@property (nonatomic, assign) BOOL refreshDelegateTriggered;
 /// Its delegate
 @property (nonatomic, weak) IBOutlet id<SWTouchScrollViewDelegate>scrollDelegate;
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
@@ -75,7 +77,4 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 @end
 
 @interface NSScrollView(TouchScroll) <NSGestureRecognizerDelegate, SWTouchScrolling>
-@property (nonatomic, assign) NSPoint touchStartPt;
-@property (nonatomic, assign) NSPoint startOrigin;
-@property (nonatomic, assign) BOOL refreshDelegateTriggered;
 @end

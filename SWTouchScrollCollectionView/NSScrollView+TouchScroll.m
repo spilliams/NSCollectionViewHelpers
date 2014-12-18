@@ -13,7 +13,7 @@
 
 #import <objc/runtime.h>
 
-#define LOG NO
+#define LOG YES
 
 @interface SWPointSmoother ()
 {
@@ -97,32 +97,7 @@
 @end
 
 @implementation NSScrollView(TouchScroll)
-@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother; // @synthesized in the subclass
-
-#pragma mark - Associated Objects
-
-// http://nshipster.com/associated-objects/
-
-static char kStartOriginKey;
-
-- (void)setTouchStartPt:(NSPoint)touchStartPt
-{
-    objc_setAssociatedObject(self, &@selector(touchStartPt), [NSValue valueWithPoint:touchStartPt], OBJC_ASSOCIATION_ASSIGN);
-}
-- (NSPoint)touchStartPt
-{
-    return [((NSValue *)objc_getAssociatedObject(self, &@selector(touchStartPt))) pointValue];
-}
-
-- (void)setStartOrigin:(NSPoint)startOrigin
-{
-    objc_setAssociatedObject(self, &kStartOriginKey, [NSValue valueWithPoint:startOrigin], OBJC_ASSOCIATION_ASSIGN);
-}
-- (NSPoint)startOrigin
-{
-    NSValue *startOriginValue = objc_getAssociatedObject(self, &kStartOriginKey);
-    return [startOriginValue pointValue];
-}
+@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered; // @synthesized in the subclass
 
 - (void)setRefreshDelegateTriggered:(BOOL)refreshDelegateTriggered
 {

@@ -1,15 +1,15 @@
 //
-//  SWTouchScrollCollectionView.h
+//  SWTouchScrollView.h
 //  CurrentScience
 //
-//  Created by Spencer Williams on 12/16/14.
+//  Created by Spencer Williams on 12/17/14.
 //  Copyright (c) 2014 Uncorked Studios. All rights reserved.
 //
 
-#import <JNWCollectionView/JNWCollectionView.h>
+#import <Cocoa/Cocoa.h>
 #import "NSScrollView+TouchScroll.h"
 
-@interface SWTouchScrollCollectionView : JNWCollectionView<SWTouchScrolling>
+@interface SWTouchScrollView : NSScrollView<SWTouchScrolling>
 @property (nonatomic, weak) IBOutlet id<SWTouchScrollViewDelegate>scrollDelegate;
 @property (nonatomic, assign) CGPoint scrollScaling;
 @property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
@@ -17,4 +17,5 @@
 @property (nonatomic, assign) NSPoint touchStartPt;
 @property (nonatomic, assign) NSPoint startOrigin;
 @property (nonatomic, assign) BOOL refreshDelegateTriggered;
+
 @end
