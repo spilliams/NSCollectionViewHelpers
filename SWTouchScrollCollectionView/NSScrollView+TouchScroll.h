@@ -74,6 +74,7 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 /// Fires when the touch-scroll view is finished scrolling
 /// @param  touchScrollView The touch-scroll collection view
 - (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+- (void)touchScrollView:(NSScrollView<SWTouchScrolling> *)touchScrollView scrolledToPoint:(NSPoint)scrollPoint;
 @end
 
 @interface NSScrollView(TouchScroll) <NSGestureRecognizerDelegate, SWTouchScrolling>

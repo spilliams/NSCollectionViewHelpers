@@ -160,6 +160,7 @@
         
     } else if (recognizer.state == NSGestureRecognizerStateEnded) {
         
+        if (LOG) NSLog(@"[TS] end");
         [self.pointSmoother clearPoints];
         
         self.refreshDelegateTriggered = NO;
@@ -183,7 +184,14 @@
         NSPoint smoothedPoint = [self.pointSmoother getSmoothedPoint];
         [self.contentView scrollPoint:smoothedPoint];
         
-        // notify the delegate, if necessary
+        // notify delegate of scroll point
+        if (self.scrollDelegate != nil &&
+            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
+            [self.scrollDelegate respondsToSelector:@selector(touchScrollView:scrolledToPoint:)]) {
+            [self.scrollDelegate touchScrollView:self scrolledToPoint:smoothedPoint];
+        }
+        
+        // notify the delegate of pull-to-refresh
         if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewReachedBottom:)]) {
             CGFloat end = self.contentView.documentRect.size.height - self.frame.size.height;
             CGFloat threshold = self.frame.size.height * kSWPullToRefreshScreenFactor;
