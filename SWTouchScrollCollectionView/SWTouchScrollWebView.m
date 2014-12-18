@@ -48,6 +48,8 @@
     // disable scroll bars (also disables scrolling for some reason)
     [self.webScrollView performSelector:@selector(setAlwaysHideVerticalScroller:) withObject:[NSNumber numberWithBool:YES]];
     [self.webScrollView performSelector:@selector(setAlwaysHideHorizontalScroller:) withObject:[NSNumber numberWithBool:YES]];
+    _pointSmootherLength = 25;
+    _scrollScaling = CGPointMake(1, 1);
     [self reinitializeTouchScroller];
     [self updateTouchScrollerContentSize];
 }
@@ -84,8 +86,8 @@
     [self addSubview:_touchScroller];
     [_touchScroller setScrollDelegate:self];
     [_touchScroller setScrollDirection:SWTouchScrollDirectionBoth];
-    [_touchScroller newPointSmootherWithLength:25];
-    [_touchScroller setScrollScaling:CGPointMake(.5, .5)];
+    [_touchScroller newPointSmootherWithLength:self.pointSmootherLength];
+    [_touchScroller setScrollScaling:self.scrollScaling];
     [_touchScroller initializeTouchScrollable];
 }
 - (void)updateTouchScrollerContentSize
@@ -108,6 +110,17 @@
     [super setFrame:frame];
     
     [self.touchScroller setFrameSize:frame.size];
+}
+
+- (void)setPointSmootherLength:(NSInteger)pointSmootherLength
+{
+    _pointSmootherLength = pointSmootherLength;
+    [self reinitializeTouchScroller];
+}
+- (void)setScrollScaling:(CGPoint)scrollScaling
+{
+    _scrollScaling = scrollScaling;
+    [self reinitializeTouchScroller];
 }
 
 - (void)touchScrollView:(NSScrollView<SWTouchScrolling> *)touchScrollView scrolledToPoint:(NSPoint)scrollPoint
