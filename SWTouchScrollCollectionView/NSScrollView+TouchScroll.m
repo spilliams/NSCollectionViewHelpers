@@ -7,7 +7,6 @@
 //
 
 #import "NSScrollView+TouchScroll.h"
-#import "CABasicAnimation+Initializers.h"
 
 #import <QuartzCore/CAAnimation.h>
 #import <QuartzCore/CAMediaTimingFunction.h>
@@ -167,7 +166,6 @@
         CGFloat t = 0.2;
         CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
                                  self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
-
         
         CGPoint dr = NSMakePoint(0.5 * v.x * t,
                                  0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
@@ -177,8 +175,9 @@
         if (self.scrollDirection == SWTouchScrollDirectionHorizontal) r.y = 0;
         
         // scroll height - current - screen size
-        CGPoint maxDr = NSMakePoint(((NSView *)self.documentView).frame.size.width - self.startOrigin.x - self.frame.size.width,
-                                    ((NSView *)self.documentView).frame.size.height - self.startOrigin.y - self.frame.size.height);
+        CGSize documentSize = ((NSView *)self.documentView).frame.size;
+        CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
+                                    documentSize.height - self.startOrigin.y - self.frame.size.height);
         
         NSPoint rf = NSMakePoint(r.x, r.y);
         rf.x = MIN(MAX(0, rf.x), rf.x + maxDr.x);
@@ -186,8 +185,8 @@
         
         if (LOG) {
             NSLog(@"[TS] pan ended");
-            NSLog(@"  scroll height %f", self.contentView.frame.size.height);
-            NSLog(@"  container height %f", self.frame.size.height);
+            NSLog(@"  document size %@", NSStringFromSize(documentSize));
+            NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
             NSLog(@"  current position %@", NSStringFromPoint(r0));
             NSLog(@"  max displacement %@", NSStringFromPoint(maxDr));
             NSLog(@"  velocity %@", NSStringFromPoint(v));

@@ -12,7 +12,7 @@
 @interface SWTouchScrollWebView : WebView <NSGestureRecognizerDelegate, SWTouchScrollViewDelegate>
 - (NSScrollView *)webScrollView;
 /// defaults to 25
-@property (assign) NSInteger pointSmootherLength;
+@property (nonatomic, assign) NSInteger pointSmootherLength;
 /// defaults to a [1,1] point
-@property (assign) CGPoint scrollScaling;
+@property (nonatomic, assign) CGPoint scrollScaling;
 @end
