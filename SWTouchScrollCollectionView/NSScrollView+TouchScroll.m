@@ -13,6 +13,7 @@
 #import <objc/runtime.h>
 
 #define LOG YES
+#define kEnableScrollVelocity NO
 
 @interface SWPointSmoother ()
 {
@@ -157,64 +158,74 @@
         
         if (LOG) NSLog(@"[TS] end");
 
-        // uniform acceleration equation
-        // we have initial velocity (v0) and initial position (r0) from the GR and scroll view
-        // we specify how long the deceleration should take (t), and that final velocity should be 0 (v)
-        // we determine final position (r) from this and animate to it. ready? 123go!
+        BOOL notifiedDelegate = NO;
         
-        CGPoint v = [recognizer velocityInView:self.contentView];
-        CGFloat t = 0.2;
-        CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
-                                 self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
-        
-        CGPoint dr = NSMakePoint(0.5 * v.x * t,
-                                 0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
-        CGPoint r = NSMakePoint(r0.x + dr.x,
-                                r0.y + dr.y); // r = r0 + dr
-        if (self.scrollDirection == SWTouchScrollDirectionVertical) r.x = 0;
-        if (self.scrollDirection == SWTouchScrollDirectionHorizontal) r.y = 0;
-        
-        // scroll height - current - screen size
-        CGSize documentSize = ((NSView *)self.documentView).frame.size;
-        CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
-                                    documentSize.height - self.startOrigin.y - self.frame.size.height);
-        
-        NSPoint rf = NSMakePoint(r.x, r.y);
-        rf.x = MIN(MAX(0, rf.x), rf.x + maxDr.x);
-        rf.y = MIN(MAX(0, rf.y), rf.y + maxDr.y);
-        
-        if (LOG) {
-            NSLog(@"[TS] pan ended");
-            NSLog(@"  document size %@", NSStringFromSize(documentSize));
-            NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
-            NSLog(@"  current position %@", NSStringFromPoint(r0));
-            NSLog(@"  max displacement %@", NSStringFromPoint(maxDr));
-            NSLog(@"  velocity %@", NSStringFromPoint(v));
-            NSLog(@"  displacement %@", NSStringFromPoint(dr));
-            NSLog(@"  projected final position %@", NSStringFromPoint(r));
-            NSLog(@"  snapped final position %@", NSStringFromPoint(rf));
+        if (kEnableScrollVelocity) {
+            // uniform acceleration equation
+            // we have initial velocity (v0) and initial position (r0) from the GR and scroll view
+            // we specify how long the deceleration should take (t), and that final velocity should be 0 (v)
+            // we determine final position (r) from this and animate to it. ready? 123go!
+            
+            CGPoint v = [recognizer velocityInView:self.contentView];
+            CGFloat t = 0.4;
+            CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
+                                     self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
+            
+            CGPoint dr = NSMakePoint(0.5 * v.x * t,
+                                     0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
+            CGPoint r = NSMakePoint(r0.x + dr.x,
+                                    r0.y + dr.y); // r = r0 + dr
+            if (self.scrollDirection == SWTouchScrollDirectionVertical) r.x = 0;
+            if (self.scrollDirection == SWTouchScrollDirectionHorizontal) r.y = 0;
+            
+            // scroll height - current - screen size
+            CGSize documentSize = ((NSView *)self.documentView).frame.size;
+            CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
+                                        documentSize.height - self.startOrigin.y - self.frame.size.height);
+            
+            NSPoint rf = NSMakePoint(r.x, -1*r.y);
+            rf.x = MIN(MAX(0, rf.x), rf.x + maxDr.x);
+            rf.y = MIN(MAX(0, rf.y), rf.y + maxDr.y);
+            
+            if (LOG) {
+                NSLog(@"[TS] pan ended");
+                NSLog(@"  document size %@", NSStringFromSize(documentSize));
+                NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
+                NSLog(@"  current position %@", NSStringFromPoint(r0));
+                NSLog(@"  max displacement %@", NSStringFromPoint(maxDr));
+                NSLog(@"  velocity %@", NSStringFromPoint(v));
+                NSLog(@"  displacement %@", NSStringFromPoint(dr));
+                NSLog(@"  projected final position %@", NSStringFromPoint(r));
+                NSLog(@"  snapped final position %@", NSStringFromPoint(rf));
+            }
+            
+            if (dr.x == 0 && dr.y == 0) {
+                if (LOG) NSLog(@"  no animation needed");
+            }
+            
+            [NSAnimationContext beginGrouping];
+            [[NSAnimationContext currentContext] setDuration:t];
+            [[self.contentView animator] setBoundsOrigin:rf];
+            [NSAnimationContext endGrouping];
+            
+            if (self.scrollDelegate != nil &&
+                [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
+                [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:didScrollToFinalPoint:duration:)]) {
+                [self.scrollDelegate touchScrollViewDidEndScrolling:self didScrollToFinalPoint:rf duration:t];
+                notifiedDelegate = YES;
+            }
         }
-        
-        if (dr.x == 0 && dr.y == 0) {
-            if (LOG) NSLog(@"  no animation needed");
-        }
-        
-        [NSAnimationContext beginGrouping];
-        [[NSAnimationContext currentContext] setDuration:t];
-        [[self.contentView animator] setBoundsOrigin:rf];
-        [NSAnimationContext endGrouping];
         
         // the other stuff. not animation-related
         [self.pointSmoother clearPoints];
         
         self.refreshDelegateTriggered = NO;
         
-        if (self.scrollDelegate != nil &&
-            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
-//            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
-//            [self.scrollDelegate touchScrollViewDidEndScrolling:self];
-            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:didScrollToFinalPoint:duration:)]) {
-            [self.scrollDelegate touchScrollViewDidEndScrolling:self didScrollToFinalPoint:rf duration:t];
+        if (!notifiedDelegate
+            && self.scrollDelegate != nil
+            && [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)]
+            && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
+            [self.scrollDelegate touchScrollViewDidEndScrolling:self];
         }
         
     } else  if (recognizer.state == NSGestureRecognizerStateChanged) {

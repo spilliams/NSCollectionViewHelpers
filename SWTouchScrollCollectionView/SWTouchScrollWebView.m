@@ -134,8 +134,9 @@
     scrollToPoint = lastPoint;
 }
 
-//- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
-- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
+// FIXME: animate scrolling to final point
+- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
+//- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
 {
     // FIXME
 //    scrollToPoint = finalPoint
