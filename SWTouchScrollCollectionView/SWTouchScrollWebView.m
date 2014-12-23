@@ -134,8 +134,15 @@
     scrollToPoint = lastPoint;
 }
 
-- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
+//- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
+- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
 {
+    // FIXME
+//    scrollToPoint = finalPoint
+//    [NSAnimationContext beginGrouping];
+//    [[NSAnimationContext currentContext] setDuration:duration];
+//    [[self.webScrollView.contentView animator] setBoundsOrigin:finalPoint];
+//    [NSAnimationContext endGrouping];
     lastPoint = scrollToPoint;
 }
 @end

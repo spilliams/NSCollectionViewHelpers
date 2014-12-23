@@ -211,8 +211,10 @@
         
         if (self.scrollDelegate != nil &&
             [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
-            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
-            [self.scrollDelegate touchScrollViewDidEndScrolling:self];
+//            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
+//            [self.scrollDelegate touchScrollViewDidEndScrolling:self];
+            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:didScrollToFinalPoint:duration:)]) {
+            [self.scrollDelegate touchScrollViewDidEndScrolling:self didScrollToFinalPoint:rf duration:t];
         }
         
     } else  if (recognizer.state == NSGestureRecognizerStateChanged) {
