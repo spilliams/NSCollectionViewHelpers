@@ -12,8 +12,8 @@
 #import <QuartzCore/CAMediaTimingFunction.h>
 #import <objc/runtime.h>
 
-#define LOG YES
-#define kEnableScrollVelocity NO
+#define LOG NO
+#define kEnableScrollVelocity YES
 
 @interface SWPointSmoother ()
 {
@@ -167,9 +167,13 @@
             // we determine final position (r) from this and animate to it. ready? 123go!
             
             CGPoint v = [recognizer velocityInView:self.contentView];
+            v.y = -1*v.y;
+            // TODO: should we invert x too? Unsure (no test bed right now)
             CGFloat t = 0.4;
             CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
                                      self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
+            [self.pointSmoother addPoint:r0];
+            r0 = [self.pointSmoother getSmoothedPoint];
             
             CGPoint dr = NSMakePoint(0.5 * v.x * t,
                                      0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
@@ -183,7 +187,7 @@
             CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
                                         documentSize.height - self.startOrigin.y - self.frame.size.height);
             
-            NSPoint rf = NSMakePoint(r.x, -1*r.y);
+            NSPoint rf = NSMakePoint(r.x, r.y);
             rf.x = MIN(MAX(0, rf.x), rf.x + maxDr.x);
             rf.y = MIN(MAX(0, rf.y), rf.y + maxDr.y);
             
