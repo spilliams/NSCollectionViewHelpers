@@ -125,25 +125,28 @@
 
 - (void)touchScrollView:(NSScrollView<SWTouchScrolling> *)touchScrollView scrolledToPoint:(NSPoint)scrollPoint
 {
+    NSLog(@"[TSWV] scrolled to point %@", NSStringFromPoint(scrollPoint));
     scrollToPoint = NSMakePoint(lastPoint.x+scrollPoint.x, lastPoint.y+scrollPoint.y);
+    NSLog(@"  setting scrollToPoint %@", NSStringFromPoint(scrollToPoint));
     [self.webScrollView.contentView scrollPoint:scrollToPoint];
+    NSLog(@"  bounds origin after scroll %@", NSStringFromPoint(self.webScrollView.contentView.bounds.origin));
 }
 
 - (void)touchScrollViewWillStartScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
 {
+    NSLog(@"[TSWV] starting a scroll. setting scrollToPoint from lastPoint %@", NSStringFromPoint(lastPoint));
     scrollToPoint = lastPoint;
 }
 
-// FIXME: animate scrolling to final point
-- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
-//- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
+- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
 {
-    // FIXME
-//    scrollToPoint = finalPoint
+    NSLog(@"[TSWV] scrolled to final point %@", NSStringFromPoint(finalPoint));
+//    scrollToPoint = finalPoint;
 //    [NSAnimationContext beginGrouping];
 //    [[NSAnimationContext currentContext] setDuration:duration];
 //    [[self.webScrollView.contentView animator] setBoundsOrigin:finalPoint];
 //    [NSAnimationContext endGrouping];
+    NSLog(@"  setting lastPoint to scrollToPoint %@", NSStringFromPoint(scrollToPoint));
     lastPoint = scrollToPoint;
 }
 @end

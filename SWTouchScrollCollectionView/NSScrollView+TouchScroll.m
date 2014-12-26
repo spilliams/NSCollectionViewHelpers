@@ -12,7 +12,7 @@
 #import <QuartzCore/CAMediaTimingFunction.h>
 #import <objc/runtime.h>
 
-#define LOG NO
+#define LOG YES
 #define kEnableScrollVelocity YES
 
 @interface SWPointSmoother ()
