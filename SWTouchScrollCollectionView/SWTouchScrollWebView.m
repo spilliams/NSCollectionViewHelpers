@@ -89,6 +89,7 @@
     [_touchScroller newPointSmootherWithLength:self.pointSmootherLength];
     [_touchScroller setScrollScaling:self.scrollScaling];
     [_touchScroller initializeTouchScrollable];
+    [_touchScroller setScrollingView:self.webScrollView.contentView];
 }
 - (void)updateTouchScrollerContentSize
 {
@@ -108,7 +109,6 @@
 - (void)setFrame:(NSRect)frame
 {
     [super setFrame:frame];
-    
     [self.touchScroller setFrameSize:frame.size];
 }
 
@@ -117,36 +117,11 @@
     _pointSmootherLength = pointSmootherLength;
     [self reinitializeTouchScroller];
 }
+
 - (void)setScrollScaling:(CGPoint)scrollScaling
 {
     _scrollScaling = scrollScaling;
     [self reinitializeTouchScroller];
 }
 
-- (void)touchScrollView:(NSScrollView<SWTouchScrolling> *)touchScrollView scrolledToPoint:(NSPoint)scrollPoint
-{
-    NSLog(@"[TSWV] scrolled to point %@", NSStringFromPoint(scrollPoint));
-    scrollToPoint = NSMakePoint(lastPoint.x+scrollPoint.x, lastPoint.y+scrollPoint.y);
-    NSLog(@"  setting scrollToPoint %@", NSStringFromPoint(scrollToPoint));
-    [self.webScrollView.contentView scrollPoint:scrollToPoint];
-    NSLog(@"  bounds origin after scroll %@", NSStringFromPoint(self.webScrollView.contentView.bounds.origin));
-}
-
-- (void)touchScrollViewWillStartScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView
-{
-    NSLog(@"[TSWV] starting a scroll. setting scrollToPoint from lastPoint %@", NSStringFromPoint(lastPoint));
-    scrollToPoint = lastPoint;
-}
-
-- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration
-{
-    NSLog(@"[TSWV] scrolled to final point %@", NSStringFromPoint(finalPoint));
-//    scrollToPoint = finalPoint;
-//    [NSAnimationContext beginGrouping];
-//    [[NSAnimationContext currentContext] setDuration:duration];
-//    [[self.webScrollView.contentView animator] setBoundsOrigin:finalPoint];
-//    [NSAnimationContext endGrouping];
-    NSLog(@"  setting lastPoint to scrollToPoint %@", NSStringFromPoint(scrollToPoint));
-    lastPoint = scrollToPoint;
-}
 @end

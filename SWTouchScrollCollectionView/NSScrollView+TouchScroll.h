@@ -42,23 +42,28 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 
 @protocol SWTouchScrollViewDelegate;
 @protocol SWTouchScrolling <NSObject>
+/// A state variable containing the point at the start of the touch-scroll, in the scrolling view.
 @property (nonatomic, assign) NSPoint touchStartPt;
+/// A state variable containing the origin of the scrolling view at the start of the touch-scroll.
 @property (nonatomic, assign) NSPoint startOrigin;
+/// A state variable tracking whether or not the refresh delegate has been notified of a refresh.
+/// This is kept so that the refresh delegate is not notified for every single call to `handlePanGesture`
 @property (nonatomic, assign) BOOL refreshDelegateTriggered;
-/// Its delegate
+/// The view that will be controlled by the touch-scroll (pan gesture). Defaults to `self.contentView`
+@property (nonatomic, weak) NSClipView *scrollingView;
+/// The receiver's scroll delegate
 @property (nonatomic, weak) IBOutlet id<SWTouchScrollViewDelegate>scrollDelegate;
+/// A point smoother to allow the scroll to operate on a moving average. Implemented due to particular hardware issues.
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
 /// A factor to multiply "perceived" scroll distance by, to result in final view scroll distance
 @property (nonatomic, assign) CGPoint scrollScaling;
 /// The direction(s) the view is allowed to scroll
 @property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
-/// This is provided here (a) because this view cannot contain gesture recognizers in IB, and because the view controller may want to send a pan GR to a collection view that the pan GR is not directly over (for instance if the pan *starts* over one collection view and proceeds over another--that pan should still be passed to the former).
-/// @param  recognizer The recognizer event to handle
-- (void)handlePanGesture:(NSPanGestureRecognizer *)recognizer;
 /// Gives this touch-scroll collection view a new point-smoother of a specific length
 /// @param  smootherLength  The length of the smoother
 /// @see    SWPointSmoother
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength;
+/// Since we can't really override methods in a category, we need to call this from classes that conform to this protocol. Recommend calling this during `-awakeFromNib:` or similar.
 - (void)initializeTouchScrollable;
 @end
 
@@ -66,15 +71,17 @@ typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
 @protocol SWTouchScrollViewDelegate <NSObject>
 @optional
 /// Fires when the touch-scroll collection view reaches its bottom
-/// @param  touchScrollView The touch-scroll collection view
+/// @param  touchScrollView The touch-scroll view
 - (void)touchScrollViewReachedBottom:(NSScrollView<SWTouchScrolling> *)touchScrollView;
 /// Fires when the touch-scroll view is about to start scrolling
-/// @param  touchScrollView The touch-scroll collection view
+/// @param  touchScrollView The touch-scroll view
 - (void)touchScrollViewWillStartScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
 /// Fires when the touch-scroll view is finished scrolling
-/// @param  touchScrollView The touch-scroll collection view
+/// @param  touchScrollView The touch-scroll view
 - (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
-- (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView didScrollToFinalPoint:(NSPoint)finalPoint duration:(NSTimeInterval)duration;
+/// Fires during the pan gesture of a touch-scroll interaction
+/// @param  touchScrollView The touch-scroll view
+/// @param  scrollPoint     The point scrolled-to
 - (void)touchScrollView:(NSScrollView<SWTouchScrolling> *)touchScrollView scrolledToPoint:(NSPoint)scrollPoint;
 @end
 

@@ -97,7 +97,7 @@
 @end
 
 @implementation NSScrollView(TouchScroll)
-@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered; // @synthesized in the subclass
+@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered, scrollingView; // @synthesized in the subclass
 
 - (void)setRefreshDelegateTriggered:(BOOL)refreshDelegateTriggered
 {
@@ -127,6 +127,7 @@
     }
     
     self.startOrigin = NSMakePoint(0, 0);
+    self.scrollingView = self.contentView;
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
@@ -149,16 +150,12 @@
         }
         
         self.touchStartPt = location;
-        self.startOrigin = [(NSClipView*)self documentVisibleRect].origin;
+        self.startOrigin = [(NSClipView*)self.scrollingView     	documentVisibleRect].origin;
         if (LOG) NSLog(@"[TS] start origin: %@, touch start: %@",
                        NSStringFromPoint(self.startOrigin),
                        NSStringFromPoint(self.touchStartPt));
         
     } else if (recognizer.state == NSGestureRecognizerStateEnded) {
-        
-        if (LOG) NSLog(@"[TS] end");
-
-        BOOL notifiedDelegate = NO;
         
         if (kEnableScrollVelocity) {
             // uniform acceleration equation
@@ -166,7 +163,7 @@
             // we specify how long the deceleration should take (t), and that final velocity should be 0 (v)
             // we determine final position (r) from this and animate to it. ready? 123go!
             
-            CGPoint v = [recognizer velocityInView:self.contentView];
+            CGPoint v = [recognizer velocityInView:self.scrollingView];
             v.y = -1*v.y;
             // TODO: should we invert x too? Unsure (no test bed right now)
             CGFloat t = 0.4;
@@ -183,7 +180,7 @@
             if (self.scrollDirection == SWTouchScrollDirectionHorizontal) r.y = 0;
             
             // scroll height - current - screen size
-            CGSize documentSize = ((NSView *)self.documentView).frame.size;
+            CGSize documentSize = ((NSView *)self.scrollingView.documentView).frame.size;
             CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
                                         documentSize.height - self.startOrigin.y - self.frame.size.height);
             
@@ -209,15 +206,8 @@
             
             [NSAnimationContext beginGrouping];
             [[NSAnimationContext currentContext] setDuration:t];
-            [[self.contentView animator] setBoundsOrigin:rf];
+            [[self.scrollingView animator] setBoundsOrigin:rf];
             [NSAnimationContext endGrouping];
-            
-            if (self.scrollDelegate != nil &&
-                [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
-                [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:didScrollToFinalPoint:duration:)]) {
-                [self.scrollDelegate touchScrollViewDidEndScrolling:self didScrollToFinalPoint:rf duration:t];
-                notifiedDelegate = YES;
-            }
         }
         
         // the other stuff. not animation-related
@@ -225,8 +215,7 @@
         
         self.refreshDelegateTriggered = NO;
         
-        if (!notifiedDelegate
-            && self.scrollDelegate != nil
+        if (self.scrollDelegate != nil
             && [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)]
             && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndScrolling:)]) {
             [self.scrollDelegate touchScrollViewDidEndScrolling:self];
@@ -243,7 +232,7 @@
         
         [self.pointSmoother addPoint:scrollPt];
         NSPoint smoothedPoint = [self.pointSmoother getSmoothedPoint];
-        [self.contentView scrollPoint:smoothedPoint];
+        [self.scrollingView scrollPoint:smoothedPoint];
         
         // notify delegate of scroll point
         if (self.scrollDelegate != nil &&
@@ -254,7 +243,7 @@
         
         // notify the delegate of pull-to-refresh
         if (self.scrollDelegate != nil && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewReachedBottom:)]) {
-            CGFloat end = self.contentView.documentRect.size.height - self.frame.size.height;
+            CGFloat end = self.scrollingView.documentRect.size.height - self.frame.size.height;
             CGFloat threshold = self.frame.size.height * 0.1; // the distance threshold to trigger pullToRefresh in
             if (smoothedPoint.y + threshold >= end &&
                 !self.refreshDelegateTriggered) {
