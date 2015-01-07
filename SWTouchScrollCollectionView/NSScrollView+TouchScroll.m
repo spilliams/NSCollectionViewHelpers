@@ -176,8 +176,8 @@
                                      0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
             CGPoint r = NSMakePoint(r0.x + dr.x,
                                     r0.y + dr.y); // r = r0 + dr
-            if (self.scrollDirection == SWTouchScrollDirectionVertical) r.x = 0;
-            if (self.scrollDirection == SWTouchScrollDirectionHorizontal) r.y = 0;
+            if ((self.scrollDirection & SWTouchScrollDirectionVertical) == 0) r.y = 0;
+            if ((self.scrollDirection & SWTouchScrollDirectionHorizontal) == 0) r.x = 0;
             
             // scroll height - current - screen size
             CGSize documentSize = ((NSView *)self.scrollingView.documentView).frame.size;
@@ -223,10 +223,15 @@
         
     } else  if (recognizer.state == NSGestureRecognizerStateChanged) {
         
-        CGFloat dx = self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x);
-        if (self.scrollDirection == SWTouchScrollDirectionVertical) dx = 0;
         CGFloat dy = self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y);
-        if (self.scrollDirection == SWTouchScrollDirectionHorizontal) dy = 0;
+        CGFloat dx = self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x);
+        NSLog(@"[TS] scrollDirection %lu", self.scrollDirection);
+        if ((self.scrollDirection & SWTouchScrollDirectionVertical) == 0) {
+            dy = 0;
+        }
+        if ((self.scrollDirection & SWTouchScrollDirectionHorizontal) == 0) {
+            dx = 0;
+        }
         
         NSPoint scrollPt = NSMakePoint(dx, dy);
         

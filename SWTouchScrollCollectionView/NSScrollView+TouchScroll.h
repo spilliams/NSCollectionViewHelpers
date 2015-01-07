@@ -9,14 +9,11 @@
 #import <AppKit/AppKit.h>
 
 /// A scroll direction. This is used to limit a collection view to only touch-scrolling along specific axes.
-typedef NS_ENUM(NSUInteger, SWTouchScrollDirection) {
+typedef NS_OPTIONS(NSUInteger, SWTouchScrollDirection) {
     /// Vertical
-    SWTouchScrollDirectionVertical,
+    SWTouchScrollDirectionVertical = 1 << 0,
     /// Horizontal
-    SWTouchScrollDirectionHorizontal,
-    /// Both horizontal and vertical
-    SWTouchScrollDirectionBoth
-    // "none" isn't represented here because if it doesn't scroll, why does it need to touch-scroll?
+    SWTouchScrollDirectionHorizontal = 1 << 1
 };
 
 /// An object that keeps track of a moving average of a certain number of points

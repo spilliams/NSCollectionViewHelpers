@@ -85,7 +85,7 @@
     [_touchScroller setDrawsBackground:NO];
     [self addSubview:_touchScroller];
     [_touchScroller setScrollDelegate:self];
-    [_touchScroller setScrollDirection:SWTouchScrollDirectionBoth];
+    [_touchScroller setScrollDirection:(SWTouchScrollDirectionVertical|SWTouchScrollDirectionHorizontal)];
     [_touchScroller newPointSmootherWithLength:self.pointSmootherLength];
     [_touchScroller setScrollScaling:self.scrollScaling];
     [_touchScroller initializeTouchScrollable];
