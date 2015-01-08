@@ -1,130 +1,36 @@
-#SWTouchScrollCollectionView
+#TouchScrollView
 
-A custom subclass of JNWCollectionView that allows a click-drag gesture to control the scrolling of the collection view (in addition to the normal scroll gestures).
+A custom subclass of NSScrollView that allows a click-drag gesture to control the scrolling of the view (in addition to the normal scroll gestures).
 
-There's some weird workarounds in this one because the hardware I was working with at the time was IR-based and very unreliable compared to a capacative touchscreen.
+There's some weird workarounds in this one because the hardware I was working with at the time was IR-based and very unreliable compared to a capacative touchscreen. Where applicable I tried to leave ways to shortcut these workarounds so that applications with better hardware wouldn't need to waste the processor time.
 
 ##Usage
 
-*Disclaimer: The following applies to Xcode 6 and up, and JNW as of 18 August 2014.*
+*Disclaimer: The following applies to Xcode 6 and up, and JNW as of 7 Jan 2015.*
 
-###Storyboard
+This feature may be used with collection views, web views and normal scroll views. Check out the usage for any particular case, then below that there are some common usage notes.
 
-This one's a little trickier. I start by creating a collection view in the storyboard and setting its class to "SWTouchScrollCollectionView". I set it up as an IBOutlet in my view controller, and wire its data source, delegate, refreshDelegate and scrollDelegate to the same view controller.
+###As a Collection View
 
-Next up we wire a Pan gesture recognizer (GR) to the collection view. For some reason we can't embed the pan GR within the collection view, so we put it in the collection view's superview. Wire the pan GR to a method **in MyViewController.m** (and also wire MyViewController as the delegate to the pan GR). For instance:
+1. in your storyboard, make a collection view according to the instructions for JNWCollectionView.
+2. set its class to be SWTouchScrollCollectionView
 
-    - (BOOL)gestureRecognizerShouldBegin:(NSGestureRecognizer *)gestureRecognizer
-    {
-        // you could implement some code here to prevent any touch scroll collection view from scrolling
-    }
-    - (IBOutlet)handlePanGesture:(NSPanGestureRecognizer *)gestureRecognizer
-    {
-        // In case you have multiple SWTouchScrollCollectionViews showing in the same window, you'll have to write
-        // some code here to determine which to send the gesture to. Once you figure that out you can call
-        
-        [self.myCollectionView handlePanGesture:gestureRecognizer];
-    }
+###As a Web View
 
-I have noticed one bug where if you have one SWTouchScrollCollectionView **on top** of another, scrolling might happen unexpectedly in the wrong collection view. That's why I had to do this workaround of handling the pan gesture in the view controller before passing it to the collection view.
+1. in your storyboard, set up a new web view, and set its class to SWTouchScrollWebView
 
-###MyViewController.h
+###As a Scroll View
 
-    ...
-    #import "SWTouchScrollCollectionView.h"
-    
-    @interface MyViewController : NSViewController <SWTouchScrollCollectionViewDelegate, SWPullToRefreshDelegate, JNWCollectionViewDataSource, JNWCollectionViewDelegate>
-    
-    ...
-    @property (nonatomic, weak) IBOutlet SWTouchScrollCollectionView *myCollectionView;
-        
-    @end
+This is currently a little broken, I'll get around to fixing it soon.
 
-###MyViewController.m
+###Commonalities
 
-I'll go through this one method-by-method, since it's rather long
+Since the hardware I was working with for my particular application was notably faulty, I had to implement a couple of features that you may choose to use as well:
 
-    #pragma mark - View Lifecycle
-    
-    - (void)viewDidLoad
-    {
-        [super viewDidLoad];
-        
-        ...
-        
-        // setup collection view
-        [self.myCollectionView newPointSmootherWithLength:25];
-        [self.myCollectionView setScrollScaling:CGPointMake(1.5, 1.5)];
-        [self.myCollectionView setScrollDirection:SWTouchScrollDirectoinVertical];
-        
-        // set the collection view's layout, if desired
-        
-        // register cells
-        [self.myCollectionView registerNib:[[NSNib alloc] initWithNibNamed:"MyCell" bundle:nil] forCellWithReuseIdentifier:@"MyCell"];
-    }
+**Scroll Delegate** allows your view controller to respond to scroll event messages like "will start scrolling", "did end scrolling" and "view reached bottom".
 
-After the view loads (but before it appears), we set up the details of the collection view. This includes adding a point smoother, setting the scroll scaling, giving it a layout and registering its cells.
+**Point Smoothing** uses a moving average to "smooth" the touch events. This was necessary because the hardware was spotty and the cursor would jump around a little. Adding this is as simple as calling `[myTouchScrollView newPointSmootherWithLength:20]`.
 
-A point smoother basically gives the collection view a moving average to work with instead of raw touch events. Play around with different lengths. If your touchscreen is very high resolution, you may want a value of 1 here (Or try 0? It might break though. I dunno). I like 25 for my purpose, but keep in mind that for really high numbers, the scrolling may appear very strange. (If you notice bugs in its behavior, file an [Issue](https://github.com/spilliams/SWCollectionViewStaggeredGridLayout/issues)).
+**Scroll Scaling** allows you to change how much the scroll view responds to a touch. Maybe you want it to scroll very quickly or slowly.
 
-The scroll scaling lets you scroll by a factor of the perceived scroll distance. So if the user's finger travels 15 points, and your scaling is 2, then the view will actually scroll 30 points.
-
-    
-    #pragma mark - Collection View Protocols
-    #pragma mark JNWCollectionViewDataSource Protocol
-    
-    - (NSUInteger)collectionView:(JNWCollectionView *)collectionView
-          numberOfItemsInSection:(NSInteger)section
-    {
-        return 10;
-    }
-    - (JNWCollectionViewCell *)collectionView:(JNWCollectionView *)collectionView
-                       cellForItemAtIndexPath:(NSIndexPath *)indexPath
-    {
-        MyCell *cell = (MyCell *)[collectionView dequeueReusableCellWithIdentifier:@"MyCell"];
-        return cell;
-    }
-    - (JNWCollectionViewReusableView *)collectionView:(JNWCollectionView *)collectionView viewForSupplementaryViewOfKind:(NSString *)kind inSection:(NSInteger)section
-    {
-        // optional
-        return [NSView new];
-    }
-
-These are standard data source methods for a JNWCollectionView. They should be documented within that package.
-
-    #pragma mark JNWCollectionViewDelegate Protocol
-    
-    - (void)collectionView:(JNWCollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
-    {
-        // handle what happens when a cell is selected
-    }
-
-This is a standard delegate method for a JNWCollectionView.
-
-I won't cover my custom layout delegate protocols here, see other parts of this repository for those. You will almost definitely have to implement some kind of layout delegate methods, at least to give the cells their size.
-
-Finally, we come to the SWTouchScrollCollectionViewDelegate. These methods are all optional:
-
-    #pragma mark SWTouchScrollCollectionViewDelegate Protocol
-    
-    - (void)touchScrollCollectionViewWillStartScrolling:(SWTouchScrollCollectionView *)touchScrollCollectionView
-    {
-        // here you can choose to respond to the collection view starting to scroll
-    }
-    
-    - (void)touchScrollCollectioniVewDidEndScrolling:(SWTouchScrollCollectionView *)touchScrollCollectionView
-    {
-        // here you can choose to respond to the collection view ending a scroll
-    }
-    
-    - (void)touchScrollCollectionViewReachedBottom:(UCTouchScrollCollectionView *)touchScrollCollectionView
-    {
-        // Here you can choose to respond to a collection view reaching its bottom.
-    }
-    
-    - (NSColor *)backgroundColorForTouchScrollCollectionView:(SWTouchScrollCollectionView *)touchScrollCollectionView
-    {
-        // Here you can choose to give a collection view a background color. Otherwise it will be white.
-    }
-
-I think these implementations are pretty self-explanatory.
+**Scroll Direction** is a bitmask, allowing scroll directions in horizontal, vertical, both or none.
