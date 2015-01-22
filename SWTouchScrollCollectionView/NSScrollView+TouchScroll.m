@@ -164,8 +164,8 @@
             // we determine final position (r) from this and animate to it. ready? 123go!
             
             CGPoint v = [recognizer velocityInView:self.scrollingView];
+            v.x = -1*v.x;
             v.y = -1*v.y;
-            // TODO: should we invert x too? Unsure (no test bed right now)
             CGFloat t = 0.4;
             CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
                                      self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
@@ -190,6 +190,7 @@
             
             if (LOG) {
                 NSLog(@"[TS] pan ended");
+                NSLog(@"  scroll direction %lu", self.scrollDirection);
                 NSLog(@"  document size %@", NSStringFromSize(documentSize));
                 NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
                 NSLog(@"  current position %@", NSStringFromPoint(r0));
