@@ -15,4 +15,6 @@
 @property (nonatomic, assign) NSInteger pointSmootherLength;
 /// defaults to a [1,1] point
 @property (nonatomic, assign) CGPoint scrollScaling;
+/// defaults to Vertical | Horizontal
+@property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
 @end
