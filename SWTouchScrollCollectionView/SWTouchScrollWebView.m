@@ -45,9 +45,6 @@
 - (void)commonInit {
     [self setUIDelegate:self];
     [self setEditingDelegate:self];
-    // disable scroll bars (also disables scrolling for some reason)
-    [self.webScrollView performSelector:@selector(setAlwaysHideVerticalScroller:) withObject:[NSNumber numberWithBool:YES]];
-    [self.webScrollView performSelector:@selector(setAlwaysHideHorizontalScroller:) withObject:[NSNumber numberWithBool:YES]];
     _pointSmootherLength = 25;
     _scrollScaling = CGPointMake(1, 1);
     _scrollDirection = SWTouchScrollDirectionVertical | SWTouchScrollDirectionHorizontal;
@@ -58,6 +55,11 @@
 
 - (NSScrollView *)webScrollView {
     return ((NSScrollView *)((WebFrameView *)self.subviews[0]).subviews[0]);
+}
+
+- (void)setScrollerKnobStyle:(NSScrollerKnobStyle)knobStyle
+{
+    [self.webScrollView setScrollerKnobStyle:knobStyle];
 }
 
 #pragma mark - WebUIDelegate and WebEditingDelegate Protocols
