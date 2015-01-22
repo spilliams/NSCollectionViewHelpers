@@ -50,6 +50,8 @@
     [self.webScrollView performSelector:@selector(setAlwaysHideHorizontalScroller:) withObject:[NSNumber numberWithBool:YES]];
     _pointSmootherLength = 25;
     _scrollScaling = CGPointMake(1, 1);
+    _scrollDirection = SWTouchScrollDirectionVertical | SWTouchScrollDirectionHorizontal;
+    
     [self reinitializeTouchScroller];
     [self updateTouchScrollerContentSize];
 }
@@ -85,7 +87,7 @@
     [_touchScroller setDrawsBackground:NO];
     [self addSubview:_touchScroller];
     [_touchScroller setScrollDelegate:self];
-    [_touchScroller setScrollDirection:(SWTouchScrollDirectionVertical|SWTouchScrollDirectionHorizontal)];
+    [_touchScroller setScrollDirection:self.scrollDirection];
     [_touchScroller newPointSmootherWithLength:self.pointSmootherLength];
     [_touchScroller setScrollScaling:self.scrollScaling];
     [_touchScroller initializeTouchScrollable];
@@ -121,6 +123,12 @@
 - (void)setScrollScaling:(CGPoint)scrollScaling
 {
     _scrollScaling = scrollScaling;
+    [self reinitializeTouchScroller];
+}
+
+- (void)setScrollDirection:(SWTouchScrollDirection)scrollDirection
+{
+    _scrollDirection = scrollDirection;
     [self reinitializeTouchScroller];
 }
 
