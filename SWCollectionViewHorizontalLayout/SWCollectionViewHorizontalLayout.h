@@ -19,11 +19,11 @@
 /// @param  collectionView  The collection view
 /// @param  section         The section
 /// @return The header height for a particular section
-- (CGFloat)collectionView:(JNWCollectionView *)collectionView heightForHeaderInSection:(NSInteger)section;
+- (CGFloat)collectionView:(JNWCollectionView *)collectionView widthForHeaderInSection:(NSInteger)section;
 /// @param  collectionView  The collection view
 /// @param  section         The section
 /// @return The footer height for a particular section
-- (CGFloat)collectionView:(JNWCollectionView *)collectionView heightForFooterInSection:(NSInteger)section;
+- (CGFloat)collectionView:(JNWCollectionView *)collectionView widthForFooterInSection:(NSInteger)section;
 /// @param  collectionView  The collection view
 /// @param  section         The section
 /// @return The edge insets for a particular section
@@ -32,6 +32,7 @@
 @end
 
 /// A horizontal layout displays each section as one row, with header and footer views at the left and right ends of the row, respectively
+/// TODO: Consider rewriting Staggered Grid Layout to accept a layout direction (horizontal or vertical). Then this layout becomes obselete.
 @interface SWCollectionViewHorizontalLayout : JNWCollectionViewLayout
 /// The layout's delegate.
 @property (nonatomic, weak)   id<SWCollectionViewHorizontalLayoutDelegate> delegate;

@@ -99,7 +99,6 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         NSLog(@"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
         NSLog(@"[layout] preparing layout...");
     }
-    
     [self.sections removeAllObjects];
     
     // values for the entire layout
@@ -116,6 +115,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
         // number of columns, item width
         NSInteger numberOfColumns = [self.staggeredDelegate numberOfColumnsInCollectionView:self.collectionView section:section];
         NSAssert(numberOfColumns > 0, @"Staggered delegate must return a positive, non-zero number of columns");
+        
         NSEdgeInsets sectionInsets = [self edgeInsetsForSection:section];
         if (LOG) NSLog(@"    sectionInsets {top: %f, left: %f, bottom: %f, right: %f}",
                        sectionInsets.top,
