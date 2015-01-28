@@ -7,13 +7,9 @@
 //
 
 #import "NSScrollView+TouchScroll.h"
-
 #import <QuartzCore/CAAnimation.h>
-#import <QuartzCore/CAMediaTimingFunction.h>
-#import <objc/runtime.h>
 
 #define LOG YES
-#define kEnableScrollVelocity YES
 
 @interface SWPointSmoother ()
 {
@@ -97,16 +93,7 @@
 @end
 
 @implementation NSScrollView(TouchScroll)
-@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered, scrollingView; // @synthesized in the subclass
-
-- (void)setRefreshDelegateTriggered:(BOOL)refreshDelegateTriggered
-{
-    objc_setAssociatedObject(self, &@selector(refreshDelegateTriggered), [NSNumber numberWithBool:refreshDelegateTriggered], OBJC_ASSOCIATION_ASSIGN);
-}
-- (BOOL)refreshDelegateTriggered
-{
-    return [((NSNumber *)objc_getAssociatedObject(self, &@selector(refreshDelegateTriggered))) boolValue];
-}
+@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered, scrollingView, useVelocity, velocityAnimating, velocityAnimationDuration; // @synthesized in the subclass
 
 #pragma mark - Initialization
 
@@ -128,6 +115,9 @@
     
     self.startOrigin = NSMakePoint(0, 0);
     self.scrollingView = self.contentView;
+    
+    self.useVelocity = YES;
+    self.velocityAnimationDuration = 0.4;
 }
 
 - (void)newPointSmootherWithLength:(NSInteger)smootherLength
@@ -141,23 +131,33 @@
 {
     CGPoint location = [recognizer locationInView:self];
     
+    BOOL horizontalScrollAllowed = (self.scrollDirection & SWTouchScrollDirectionHorizontal) != 0;
+    BOOL verticalScrollAllowed = (self.scrollDirection & SWTouchScrollDirectionVertical) != 0;
+    
     if (recognizer.state == NSGestureRecognizerStateBegan) {
         
-        if (self.scrollDelegate != nil &&
-            [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)] &&
-            [self.scrollDelegate respondsToSelector:@selector(touchScrollViewWillStartScrolling:)]) {
+        if (self.scrollDelegate != nil
+            && [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)]
+            && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewWillStartScrolling:)]) {
             [self.scrollDelegate touchScrollViewWillStartScrolling:self];
         }
         
         self.touchStartPt = location;
-        self.startOrigin = [(NSClipView*)self.scrollingView     	documentVisibleRect].origin;
-        if (LOG) NSLog(@"[TS] start origin: %@, touch start: %@",
+        self.startOrigin = [(NSClipView*)self.scrollingView documentVisibleRect].origin;
+        if (LOG) NSLog(@"[TS] start origin: %@, touch start: %@, scrollingView origin: %@",
                        NSStringFromPoint(self.startOrigin),
-                       NSStringFromPoint(self.touchStartPt));
+                       NSStringFromPoint(self.touchStartPt),
+                       NSStringFromPoint(self.scrollingView.bounds.origin));
         
     } else if (recognizer.state == NSGestureRecognizerStateEnded) {
         
-        if (kEnableScrollVelocity) {
+        // scroll height - current - screen size
+        CGSize documentSize = ((NSView *)self.scrollingView.documentView).frame.size;
+        CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
+                                    documentSize.height - self.startOrigin.y - self.frame.size.height);
+        
+        if (self.useVelocity) {
+            
             // uniform acceleration equation
             // we have initial velocity (v0) and initial position (r0) from the GR and scroll view
             // we specify how long the deceleration should take (t), and that final velocity should be 0 (v)
@@ -166,49 +166,74 @@
             CGPoint v = [recognizer velocityInView:self.scrollingView];
             v.x = -1*v.x;
             v.y = -1*v.y;
-            CGFloat t = 0.4;
+            
+            // The math here is a little confusing at first glance.
+            // The distance the gesture has traveled is the (location.x - self.touchStartPt.y)
+            // The distance the scrollView should go is the distance traveled multiplied by the scaling factor
+            // The distance the scrollView should go is applied to the start origin (the origin of the scrolling view when the gesture started)
             CGPoint r0 = NSMakePoint(self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x),
                                      self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y));
             [self.pointSmoother addPoint:r0];
             r0 = [self.pointSmoother getSmoothedPoint];
             
-            CGPoint dr = NSMakePoint(0.5 * v.x * t,
-                                     0.5 * v.y * t); // dr = ((v + v0)/2)t = (v0 / 2) t
+            CGPoint dr = NSMakePoint(0.5 * v.x * self.velocityAnimationDuration,
+                                     0.5 * v.y * self.velocityAnimationDuration); // dr = ((v + v0)/2)t = (v0 / 2) t
+            
             CGPoint r = NSMakePoint(r0.x + dr.x,
                                     r0.y + dr.y); // r = r0 + dr
-            if ((self.scrollDirection & SWTouchScrollDirectionVertical) == 0) r.y = 0;
-            if ((self.scrollDirection & SWTouchScrollDirectionHorizontal) == 0) r.x = 0;
-            
-            // scroll height - current - screen size
-            CGSize documentSize = ((NSView *)self.scrollingView.documentView).frame.size;
-            CGPoint maxDr = NSMakePoint(documentSize.width - self.startOrigin.x - self.frame.size.width,
-                                        documentSize.height - self.startOrigin.y - self.frame.size.height);
+            if (!verticalScrollAllowed) r.y = 0;
+            if (!horizontalScrollAllowed) r.x = 0;
             
             NSPoint rf = NSMakePoint(r.x, r.y);
             rf.x = MIN(MAX(0, rf.x), rf.x + maxDr.x);
             rf.y = MIN(MAX(0, rf.y), rf.y + maxDr.y);
             
             if (LOG) {
-                NSLog(@"[TS] pan ended");
-                NSLog(@"  scroll direction %lu", self.scrollDirection);
+                NSLog(@"[TS] pan ended (starting velocity)");
                 NSLog(@"  document size %@", NSStringFromSize(documentSize));
                 NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
                 NSLog(@"  current position %@", NSStringFromPoint(r0));
                 NSLog(@"  max displacement %@", NSStringFromPoint(maxDr));
                 NSLog(@"  velocity %@", NSStringFromPoint(v));
                 NSLog(@"  displacement %@", NSStringFromPoint(dr));
+                NSLog(@"  scroll directions H:%@ V:%@", (horizontalScrollAllowed ? @"YES" : @"NO"), (verticalScrollAllowed ? @"YES" : @"NO"));
                 NSLog(@"  projected final position %@", NSStringFromPoint(r));
                 NSLog(@"  snapped final position %@", NSStringFromPoint(rf));
             }
             
             if (dr.x == 0 && dr.y == 0) {
                 if (LOG) NSLog(@"  no animation needed");
-            }
+            } else {
             
-            [NSAnimationContext beginGrouping];
-            [[NSAnimationContext currentContext] setDuration:t];
-            [[self.scrollingView animator] setBoundsOrigin:rf];
-            [NSAnimationContext endGrouping];
+                self.velocityAnimating = YES;
+                __weak __typeof(self)weakSelf = self;
+                if (self.scrollDelegate
+                    && [self.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)]
+                    && [self.scrollDelegate respondsToSelector:@selector(touchScrollViewWillStartVelocityAnimation:)]) {
+                    [self.scrollDelegate touchScrollViewWillStartVelocityAnimation:self];
+                }
+                
+                [NSAnimationContext beginGrouping];
+                    [[NSAnimationContext currentContext] setDuration:self.velocityAnimationDuration];
+                    [[NSAnimationContext currentContext] setCompletionHandler:^{
+                        [weakSelf setVelocityAnimating:NO];
+                        if (weakSelf.scrollDelegate
+                            && [weakSelf.scrollDelegate conformsToProtocol:@protocol(SWTouchScrollViewDelegate)]
+                            && [weakSelf.scrollDelegate respondsToSelector:@selector(touchScrollViewDidEndVelocityAnimation:)]) {
+                            [weakSelf.scrollDelegate touchScrollViewDidEndVelocityAnimation:weakSelf];
+                        }
+                    }];
+                    [[self.scrollingView animator] setBoundsOrigin:rf];
+                [NSAnimationContext endGrouping];
+            }
+        } else {
+            if (LOG) {
+                NSLog(@"[TS] pan ended (no velocity)");
+                NSLog(@"  scroll direction %lu", self.scrollDirection);
+                NSLog(@"  document size %@", NSStringFromSize(documentSize));
+                NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
+                NSLog(@"  current position %@", NSStringFromPoint([self.pointSmoother getSmoothedPoint]));
+            }
         }
         
         // the other stuff. not animation-related
@@ -226,13 +251,8 @@
         
         CGFloat dy = self.startOrigin.y - self.scrollScaling.y * (location.y - self.touchStartPt.y);
         CGFloat dx = self.startOrigin.x - self.scrollScaling.x * (location.x - self.touchStartPt.x);
-        NSLog(@"[TS] scrollDirection %lu", self.scrollDirection);
-        if ((self.scrollDirection & SWTouchScrollDirectionVertical) == 0) {
-            dy = 0;
-        }
-        if ((self.scrollDirection & SWTouchScrollDirectionHorizontal) == 0) {
-            dx = 0;
-        }
+        if (!verticalScrollAllowed) dy = 0;
+        if (!horizontalScrollAllowed) dx = 0;
         
         NSPoint scrollPt = NSMakePoint(dx, dy);
         
@@ -260,6 +280,12 @@
         }
         
     }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(NSGestureRecognizer *)gestureRecognizer
+{
+    if (LOG) NSLog(@"[TS] gesture recognizer should%@ begin", !self.velocityAnimating ? @"" : @" NOT");
+    return !self.velocityAnimating;
 }
 
 @end

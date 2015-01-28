@@ -46,6 +46,12 @@ typedef NS_OPTIONS(NSUInteger, SWTouchScrollDirection) {
 /// A state variable tracking whether or not the refresh delegate has been notified of a refresh.
 /// This is kept so that the refresh delegate is not notified for every single call to `handlePanGesture`
 @property (nonatomic, assign) BOOL refreshDelegateTriggered;
+/// Whether or not to use velocity at the end of a TS gesture. Defaults to YES
+@property (nonatomic, assign) BOOL useVelocity;
+/// Whether or not the view is currently animating with velocity.
+@property (nonatomic, assign) BOOL velocityAnimating;
+/// The duration of the velocity animation. Default is 0.4.
+@property (nonatomic, assign) CGFloat velocityAnimationDuration;
 /// The view that will be controlled by the touch-scroll (pan gesture). Defaults to `self.contentView`
 @property (nonatomic, weak) NSClipView *scrollingView;
 /// The receiver's scroll delegate
@@ -76,6 +82,12 @@ typedef NS_OPTIONS(NSUInteger, SWTouchScrollDirection) {
 /// Fires when the touch-scroll view is finished scrolling
 /// @param  touchScrollView The touch-scroll view
 - (void)touchScrollViewDidEndScrolling:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+/// Fires when the touch-scroll view is about to start a velocity animation
+/// @param  touchScrollView The touch-scroll view
+- (void)touchScrollViewWillStartVelocityAnimation:(NSScrollView<SWTouchScrolling> *)touchScrollView;
+/// Fires when the touch-scroll view has ended a velocity animation
+/// @param  touchScrollView The touch-scroll view
+- (void)touchScrollViewDidEndVelocityAnimation:(NSScrollView<SWTouchScrolling> *)touchScrollView;
 /// Fires during the pan gesture of a touch-scroll interaction
 /// @param  touchScrollView The touch-scroll view
 /// @param  scrollPoint     The point scrolled-to

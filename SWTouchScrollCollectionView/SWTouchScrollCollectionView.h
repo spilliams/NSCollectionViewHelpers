@@ -17,5 +17,8 @@
 @property (nonatomic, assign) NSPoint touchStartPt;
 @property (nonatomic, assign) NSPoint startOrigin;
 @property (nonatomic, assign) BOOL refreshDelegateTriggered;
+@property (nonatomic, assign) BOOL useVelocity;
+@property (nonatomic, assign) BOOL velocityAnimating;
+@property (nonatomic, assign) CGFloat velocityAnimationDuration;
 @property (nonatomic, weak) NSClipView *scrollingView;
 @end
