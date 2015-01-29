@@ -63,6 +63,10 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
     return _sections;
 }
 
+- (JNWCollectionViewScrollDirection)scrollDirection {
+    return JNWCollectionViewScrollDirectionHorizontal;
+}
+
 - (void)prepareLayout
 {
     if (LOG) {
