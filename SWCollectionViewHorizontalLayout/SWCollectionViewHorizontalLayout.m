@@ -7,7 +7,8 @@
 
 #import "SWCollectionViewHorizontalLayout.h"
 
-#define LOG NO
+#define LOG YES
+#define LOG_IN_RECT YES
 
 typedef struct {
     /// Origin WRT section start (not including header or footer)
@@ -60,10 +61,6 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
     }
    
     return _sections;
-}
-
-- (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
-    return NO;
 }
 
 - (void)prepareLayout
@@ -121,7 +118,7 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
             maxItemHeight = MAX(maxItemHeight, size.height);
             if (LOG) NSLog(@"        origin %@", NSStringFromPoint(origin));
             if (LOG) NSLog(@"        size %@", NSStringFromSize(size));
-            if (LOG) NSLog(@"        (frame) %@", NSStringFromRect(NSMakeRect(origin.x, origin.y, origin.x+size.width, origin.y+size.height)));
+            if (LOG) NSLog(@"        (begin point, end point) %@", NSStringFromRect(NSMakeRect(origin.x, origin.y, origin.x+size.width, origin.y+size.height)));
             sectionInfo.itemInfo[item].size = size;
             sectionInfo.itemInfo[item].origin = origin;
         } // item loop
@@ -139,40 +136,57 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
     SWCollectionViewHorizontalLayoutItemInfo itemInfo = section.itemInfo[indexPath.jnw_item];
     CGFloat offset = section.offset;
     
-    JNWCollectionViewLayoutAttributes *attributes = [[JNWCollectionViewLayoutAttributes alloc] init];
-    attributes.frame = CGRectMake(itemInfo.origin.x, itemInfo.origin.y + offset, itemInfo.size.width, itemInfo.size.height);
-    attributes.alpha = 1.f;
-    return attributes;
-}
-
-- (JNWCollectionViewLayoutAttributes *)layoutAttributesForSupplementaryItemInSection:(NSInteger)sectionIndex kind:(NSString *)kind
-{
-    SWCollectionViewHorizontalLayoutSection *sectionInfo = self.sections[sectionIndex];
-    CGFloat height = sectionInfo.height;
-    CGRect frame = CGRectZero;
-    
-    if ([kind isEqualToString:JNWCollectionViewGridLayoutHeaderKind]) {
-        frame = CGRectMake(0, sectionInfo.offset, sectionInfo.headerWidth, height);
-    } else if ([kind isEqualToString:JNWCollectionViewGridLayoutFooterKind]) {
-        frame = CGRectMake(0, sectionInfo.offset + sectionInfo.height, sectionInfo.footerWidth, height);
-    }
-    
     JNWCollectionViewLayoutAttributes *attributes = [JNWCollectionViewLayoutAttributes new];
-    attributes.frame = frame;
+    attributes.frame = CGRectMake(itemInfo.origin.x,
+                                  itemInfo.origin.y + offset,
+                                  itemInfo.size.width,
+                                  itemInfo.size.height);
     attributes.alpha = 1.f;
     return attributes;
 }
 
 - (NSArray *)indexPathsForItemsInRect:(CGRect)rect {
+    // I assume rect is defined in the coordinate space of the entire collection view
+    
+    if (LOG_IN_RECT) {
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"");
+        NSLog(@"[layout] indexPathsForItemsInRect: {%f, %f, %f, %f}",
+              rect.origin.x,
+              rect.origin.y,
+              rect.size.width,
+              rect.size.height);
+    }
+
     NSMutableArray *indexPaths = [NSMutableArray array];
     
-    for (SWCollectionViewHorizontalLayoutSection *section in self.sections) {
+    for (NSUInteger sectionIndex = 0; sectionIndex < self.sections.count; sectionIndex++) {
+
+        //TODO: first check if section is in rect
+//        if (!CGRectIntersectsRect([self rectForSectionAtIndex:sectionIndex], rect)) continue;
+//        if (LOG_IN_RECT) NSLog(@"  section %i is in rect", (int)sectionIndex);
+        
+        // section is in rect, so get its details
+        SWCollectionViewHorizontalLayoutSection *sectionInfo = [self.sections objectAtIndex:sectionIndex];
+        
+        // add header width?
+//        rect.size.width += sectionInfo.headerWidth;
+
         // use a binary search to get the bounds of the index paths
-        NSInteger leftItem = [self nearestIntersectingItemInSection:section inRect:rect edge:SWSectionEdgeLeft];
-        NSInteger rightItem = [self nearestIntersectingItemInSection:section inRect:rect edge:SWSectionEdgeRight];
+        NSInteger leftItem = [self nearestIntersectingItemInSection:sectionInfo inRect:rect edge:SWSectionEdgeLeft];
+        NSInteger rightItem = [self nearestIntersectingItemInSection:sectionInfo inRect:rect edge:SWSectionEdgeRight];
+        
+        NSLog(@"  left item in rect: %i, right item: %i", (int)leftItem, (int)rightItem);
         
         for (NSInteger item = leftItem; item <= rightItem; item++) {
-            [indexPaths addObject:[NSIndexPath jnw_indexPathForItem:item inSection:section.index]];
+            [indexPaths addObject:[NSIndexPath jnw_indexPathForItem:item inSection:sectionInfo.index]];
         }
     }
     

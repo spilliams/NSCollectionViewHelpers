@@ -229,7 +229,7 @@ typedef NS_ENUM(NSInteger, SWColumnEdge) {
     SWCollectionViewGridLayoutItemInfo itemInfo = section.itemInfo[indexPath.jnw_item];
     CGFloat offset = section.offset;
     
-    JNWCollectionViewLayoutAttributes *attributes = [[JNWCollectionViewLayoutAttributes alloc] init];
+    JNWCollectionViewLayoutAttributes *attributes = [JNWCollectionViewLayoutAttributes new];
     attributes.frame = CGRectMake(itemInfo.origin.x,
                                   itemInfo.origin.y + offset,
                                   itemInfo.size.width,
