@@ -12,7 +12,7 @@
 @interface SWTouchScrollView : NSScrollView<SWTouchScrolling>
 @property (nonatomic, weak) IBOutlet id<SWTouchScrollViewDelegate>scrollDelegate;
 @property (nonatomic, assign) CGPoint scrollScaling;
-@property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
+@property (nonatomic, assign) SWTouchScrollDirection touchScrollDirection;
 @property (nonatomic, strong) SWPointSmoother *pointSmoother;
 @property (nonatomic, assign) NSPoint touchStartPt;
 @property (nonatomic, assign) NSPoint startOrigin;

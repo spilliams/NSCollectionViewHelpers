@@ -93,7 +93,7 @@
 @end
 
 @implementation NSScrollView(TouchScroll)
-@dynamic  scrollScaling, scrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered, scrollingView, useVelocity, velocityAnimating, velocityAnimationDuration; // @synthesized in the subclass
+@dynamic  scrollScaling, touchScrollDirection, scrollDelegate, pointSmoother, touchStartPt, startOrigin, refreshDelegateTriggered, scrollingView, useVelocity, velocityAnimating, velocityAnimationDuration; // @synthesized in the subclass
 
 #pragma mark - Initialization
 
@@ -131,8 +131,8 @@
 {
     CGPoint location = [recognizer locationInView:self];
     
-    BOOL horizontalScrollAllowed = (self.scrollDirection & SWTouchScrollDirectionHorizontal) != 0;
-    BOOL verticalScrollAllowed = (self.scrollDirection & SWTouchScrollDirectionVertical) != 0;
+    BOOL horizontalScrollAllowed = (self.touchScrollDirection & SWTouchScrollDirectionHorizontal) != 0;
+    BOOL verticalScrollAllowed = (self.touchScrollDirection & SWTouchScrollDirectionVertical) != 0;
     
     if (recognizer.state == NSGestureRecognizerStateBegan) {
         
@@ -229,7 +229,7 @@
         } else {
             if (LOG) {
                 NSLog(@"[TS] pan ended (no velocity)");
-                NSLog(@"  scroll direction %lu", self.scrollDirection);
+                NSLog(@"  scroll direction %lu", self.touchScrollDirection);
                 NSLog(@"  document size %@", NSStringFromSize(documentSize));
                 NSLog(@"  frame size %@", NSStringFromSize(self.frame.size));
                 NSLog(@"  current position %@", NSStringFromPoint([self.pointSmoother getSmoothedPoint]));

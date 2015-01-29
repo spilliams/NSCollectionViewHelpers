@@ -47,7 +47,7 @@
     [self setEditingDelegate:self];
     _pointSmootherLength = 25;
     _scrollScaling = CGPointMake(1, 1);
-    _scrollDirection = SWTouchScrollDirectionVertical | SWTouchScrollDirectionHorizontal;
+    _touchScrollDirection = SWTouchScrollDirectionVertical | SWTouchScrollDirectionHorizontal;
     
     [self reinitializeTouchScroller];
     [self updateTouchScrollerContentSize];
@@ -89,7 +89,7 @@
     [_touchScroller setDrawsBackground:NO];
     [self addSubview:_touchScroller];
     [_touchScroller setScrollDelegate:self];
-    [_touchScroller setScrollDirection:self.scrollDirection];
+    [_touchScroller setTouchScrollDirection:self.touchScrollDirection];
     [_touchScroller newPointSmootherWithLength:self.pointSmootherLength];
     [_touchScroller setScrollScaling:self.scrollScaling];
     [_touchScroller initializeTouchScrollable];
@@ -128,9 +128,9 @@
     [self reinitializeTouchScroller];
 }
 
-- (void)setScrollDirection:(SWTouchScrollDirection)scrollDirection
+- (void)setTouchScrollDirection:(SWTouchScrollDirection)touchScrollDirection
 {
-    _scrollDirection = scrollDirection;
+    _touchScrollDirection = touchScrollDirection;
     [self reinitializeTouchScroller];
 }
 

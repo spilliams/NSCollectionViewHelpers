@@ -16,6 +16,6 @@
 /// defaults to a [1,1] point
 @property (nonatomic, assign) CGPoint scrollScaling;
 /// defaults to Vertical | Horizontal
-@property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
+@property (nonatomic, assign) SWTouchScrollDirection touchScrollDirection;
 - (void)setScrollerKnobStyle:(NSScrollerKnobStyle)knobStyle;
 @end

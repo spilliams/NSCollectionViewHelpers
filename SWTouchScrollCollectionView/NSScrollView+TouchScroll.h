@@ -61,7 +61,7 @@ typedef NS_OPTIONS(NSUInteger, SWTouchScrollDirection) {
 /// A factor to multiply "perceived" scroll distance by, to result in final view scroll distance
 @property (nonatomic, assign) CGPoint scrollScaling;
 /// The direction(s) the view is allowed to scroll
-@property (nonatomic, assign) SWTouchScrollDirection scrollDirection;
+@property (nonatomic, assign) SWTouchScrollDirection touchScrollDirection;
 /// Gives this touch-scroll collection view a new point-smoother of a specific length
 /// @param  smootherLength  The length of the smoother
 /// @see    SWPointSmoother
