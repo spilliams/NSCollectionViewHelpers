@@ -7,8 +7,8 @@
 
 #import "SWCollectionViewHorizontalLayout.h"
 
-#define LOG YES
-#define LOG_IN_RECT YES
+#define LOG NO
+#define LOG_IN_RECT NO
 
 typedef struct {
     /// Origin WRT section start (not including header or footer)
