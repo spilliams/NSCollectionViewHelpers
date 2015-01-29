@@ -33,6 +33,7 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
 @property (nonatomic, assign) CGFloat footerWidth;
 @property (nonatomic, assign) NSInteger index;
 @property (nonatomic, assign) NSInteger numberOfItems;
+@property (nonatomic, assign) NSEdgeInsets insets;
 @property (nonatomic, assign) SWCollectionViewHorizontalLayoutItemInfo *itemInfo;
 
 - (instancetype)initWithNumberOfItems:(NSInteger)numberOfItems;
@@ -65,6 +66,15 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
 
 - (JNWCollectionViewScrollDirection)scrollDirection {
     return JNWCollectionViewScrollDirectionHorizontal;
+}
+
+- (CGRect)rectForSectionAtIndex:(NSInteger)index {
+    SWCollectionViewHorizontalLayoutSection *sectionInfo = [self.sections objectAtIndex:index];
+    // we can assume that the last item in the array is also the right-most
+    SWCollectionViewHorizontalLayoutItemInfo lastItem = sectionInfo.itemInfo[sectionInfo.numberOfItems-1];
+    CGFloat sectionWidth = lastItem.origin.x + lastItem.size.width + sectionInfo.insets.right;
+    // TODO: should probably only count header and footer if there are actual supp. views?
+    return CGRectMake(0, sectionInfo.offset, sectionInfo.headerWidth + sectionWidth + sectionInfo.footerWidth, sectionInfo.height);
 }
 
 - (void)prepareLayout
@@ -107,10 +117,11 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
         if (LOG) NSLog(@"    footerWidth %li", (long)footerWidth);
         
         SWCollectionViewHorizontalLayoutSection *sectionInfo = [[SWCollectionViewHorizontalLayoutSection alloc] initWithNumberOfItems:numberOfItems];
-        sectionInfo.offset = totalHeight + sectionInsets.top;
+        sectionInfo.offset = totalHeight;
         sectionInfo.headerWidth = headerWidth;
         sectionInfo.footerWidth = footerWidth;
         sectionInfo.index = section;
+        sectionInfo.insets = sectionInsets;
         
         CGFloat maxItemHeight = 0;
         
@@ -118,7 +129,8 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
             if (LOG) NSLog(@"      item %i", (int)item);
             NSIndexPath *indexPath = [NSIndexPath jnw_indexPathForItem:item inSection:section];
             CGSize size = [self.delegate collectionView:self.collectionView sizeForItemAtIndexPath:indexPath];
-            CGPoint origin = CGPointMake(sectionInsets.left + item * (self.itemHorizontalMargin + size.width), sectionInsets.top);
+            CGPoint origin = CGPointMake(sectionInsets.left + item * (self.itemHorizontalMargin + size.width),
+                                         sectionInsets.top);
             maxItemHeight = MAX(maxItemHeight, size.height);
             if (LOG) NSLog(@"        origin %@", NSStringFromPoint(origin));
             if (LOG) NSLog(@"        size %@", NSStringFromSize(size));
