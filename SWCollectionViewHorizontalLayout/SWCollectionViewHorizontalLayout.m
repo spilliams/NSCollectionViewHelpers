@@ -199,7 +199,7 @@ typedef NS_ENUM(NSInteger, SWSectionEdge) {
         NSInteger leftItem = [self nearestIntersectingItemInSection:sectionInfo inRect:rect edge:SWSectionEdgeLeft];
         NSInteger rightItem = [self nearestIntersectingItemInSection:sectionInfo inRect:rect edge:SWSectionEdgeRight];
         
-        NSLog(@"  left item in rect: %i, right item: %i", (int)leftItem, (int)rightItem);
+        if (LOG_IN_RECT) NSLog(@"  left item in rect: %i, right item: %i", (int)leftItem, (int)rightItem);
         
         for (NSInteger item = leftItem; item <= rightItem; item++) {
             [indexPaths addObject:[NSIndexPath jnw_indexPathForItem:item inSection:sectionInfo.index]];
